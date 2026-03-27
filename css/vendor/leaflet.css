@@ -1,0 +1,294 @@
+/* ── LEAFLET OVERRIDES ── */
+#mymaps-wrap iframe {
+  pointer-events: auto;
+}
+/* Clip container MyMaps */
+#mymaps-wrap > div {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ── Loading overlay KHUSUS jendela Leaflet ───────────────
+   Bukan fullscreen, hanya di dalam kotak peta           */
+#lf-loader {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(235,239,248,.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 800;
+  border-radius: 12px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* ── Toggle Foto Lapangan (versi kecil) ─────────── */
+#lf-toggle-df {
+  position: absolute;
+  bottom: 25px;
+  left: 10px;
+  z-index: 999;
+  background: var(--navy2);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-size: .62rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0,0,0,.25);
+  pointer-events: auto;
+}
+
+#lf-toggle-df span {
+  padding: 5px 9px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  opacity: .75;
+}
+
+#df-toggle-btn {
+  background: rgba(255,255,255,.08);
+  border: none;
+  border-left: 1px solid rgba(255,255,255,.12);
+  padding: 5px 10px;
+  color: #fff;
+  font-size: .62rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: background .16s;
+  font-family: var(--font);
+}
+
+#df-toggle-btn:hover {
+  background: rgba(255,255,255,.18);
+}
+/* ── Leaflet custom control buttons (reset & locate) ─────*/
+.leaflet-bar a {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.leaflet-bar a i {
+  font-size: .8rem;
+  color: #333;
+}
+.leaflet-container {
+  font-family: var(--font) !important;
+  border-radius: 12px;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 10px !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,.18) !important;
+  border: 1px solid var(--border);
+}
+.leaflet-popup-content {
+  margin: 10px 14px !important;
+  font-family: var(--font) !important;
+  font-size: .76rem !important;
+  line-height: 1.6 !important;
+}
+.leaflet-popup-tip-container { margin-top: -1px; }
+.lf-popup-title {
+  font-size: .8rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.lf-popup-badge {
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:20px;
+  font-size:.58rem;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  margin-bottom:5px;
+}
+.lf-popup-row {
+  display:flex;
+  gap:6px;
+  align-items:flex-start;
+  font-size:.7rem;
+  color:var(--mid);
+  margin-bottom:2px;
+}
+.lf-popup-row i { width:14px; flex-shrink:0; margin-top:2px; }
+.lf-popup-img {
+  width:100%;
+  max-height:100px;
+  object-fit:cover;
+  border-radius:6px;
+  margin-top:6px;
+  border:1px solid var(--border);
+}
+
+/* Legend bar Leaflet */
+.peta-lf-legend {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 14px;
+  margin-top: 8px;
+  flex-shrink: 0;
+  box-shadow: var(--sh0);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.peta-lf-legend-title {
+  font-size: .62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--muted);
+  width: 100%;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.peta-lf-leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .64rem;
+  font-weight: 600;
+  color: var(--mid);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 9px;
+}
+
+/* Simbol grid di form layer */
+.mlayer-simbol-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 7px;
+  margin-bottom: 10px;
+}
+.msimbol-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: 2px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+  cursor: pointer;
+  font-size: .58rem;
+  font-weight: 700;
+  color: var(--muted);
+  transition: all .15s;
+}
+.msimbol-btn:hover {
+  border-color: var(--blue);
+  background: var(--bluelo);
+  color: var(--blue);
+}
+.msimbol-btn.on {
+  border-color: var(--teal);
+  background: var(--teall);
+  color: var(--teal);
+}
+.msimbol-btn .simbol-ico { font-size: 1.1rem; }
+
+
+/* Leaflet layer list (dalam modal) */
+.layer-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  margin-bottom: 6px;
+  background: var(--card);
+  transition: all .15s;
+}
+.layer-list-item:hover { box-shadow: var(--sh0); }
+.layer-list-item.inactive { opacity: .45; }
+.layer-item-ico {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .85rem;
+  flex-shrink: 0;
+}
+.layer-item-info { flex: 1; min-width: 0; }
+.layer-item-name {
+  font-size: .76rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.layer-item-sub { font-size: .6rem; color: var(--muted); margin-top: 1px; }
+.layer-item-acts { display: flex; gap: 4px; flex-shrink: 0; }
+
+/* Detail Foto marker badge */
+.df-marker-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-size:.58rem;
+  font-weight:800;
+  padding:2px 7px;
+  border-radius:20px;
+  background:rgba(30,111,217,.12);
+  color:var(--blue);
+  border:1px solid rgba(30,111,217,.2);
+  margin-top:4px;
+}
+
+/* Color swatches */
+.color-swatches {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform .13s, border-color .13s;
+}
+.color-swatch:hover { transform: scale(1.15); }
+.color-swatch.on { border-color: var(--text); transform: scale(1.15); }
+
+/* Peta stat chips */
+.peta-stat-chips {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-bottom:8px;
+  flex-shrink:0;
+}
+.peta-stat-chip {
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:.62rem;
+  font-weight:700;
+  border:1px solid transparent;
+}

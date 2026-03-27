@@ -1,0 +1,28 @@
+/* PETUNJUK TEKNIS */
+.ptk-section{margin-bottom:14px;}
+.ptk-outer{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh0);overflow:hidden;margin-bottom:0;}
+.ptk-outer-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:none;border:none;cursor:pointer;text-align:left;transition:background .14s}
+.ptk-outer-toggle:hover{background:var(--bg)}
+.ptk-outer-left{display:flex;align-items:center;gap:10px}
+.ptk-outer-ico{width:32px;height:32px;border-radius:8px;background:var(--bluelo);display:flex;align-items:center;justify-content:center;font-size:.8rem;color:var(--blue)}
+.ptk-outer-title{font-size:.84rem;font-weight:800;color:var(--text)}
+.ptk-outer-sub{font-size:.62rem;color:var(--muted);margin-top:1px}
+.ptk-outer-arr{font-size:.68rem;color:var(--muted);transition:transform .22s;flex-shrink:0}
+.ptk-outer-toggle.open .ptk-outer-arr{transform:rotate(180deg)}
+.ptk-menulist{display:none;border-top:1px solid var(--border)}
+.ptk-menulist.on{display:block;animation:fadeUp .2s ease}
+.ptk-menu-item{border-bottom:1px solid var(--border)}
+.ptk-menu-item:last-child{border-bottom:none}
+.ptk-menu-btn{width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:none;border:none;cursor:pointer;text-align:left;gap:10px;transition:background .14s}
+.ptk-menu-btn:hover{background:var(--bg)}
+.ptk-menu-btn.open{background:var(--bg)}
+.ptk-menu-left{display:flex;align-items:center;gap:9px}
+.ptk-menu-ico{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.7rem;flex-shrink:0}
+.ptk-menu-name{font-size:.76rem;font-weight:700;color:var(--text)}
+.ptk-menu-arr{font-size:.6rem;color:var(--muted);transition:transform .2s;flex-shrink:0}
+.ptk-menu-btn.open .ptk-menu-arr{transform:rotate(180deg)}
+.ptk-detail{display:none;padding:10px 16px 14px 52px;border-bottom:1px solid var(--border)}
+.ptk-detail.on{display:block;animation:fadeUp .18s ease}
+.ptk-detail p{font-size:.74rem;color:var(--mid);line-height:1.7;margin-bottom:7px}
+.ptk-detail ul{padding-left:14px}
+.ptk-detail li{font-size:.72rem;color:var(--mid);line-height:1.7;margin-bottom:2px}

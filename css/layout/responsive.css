@@ -1,0 +1,32 @@
+/* RESPONSIVE */
+@media(max-width:1200px){body:not(.mode-phone):not(.mode-desktop-hp) .sgr{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:980px){body:not(.mode-phone):not(.mode-desktop-hp) .sgr{grid-template-columns:repeat(2,1fr)}body:not(.mode-phone):not(.mode-desktop-hp) .cg2{grid-template-columns:1fr}}
+@media(max-width:768px){
+  body:not(.mode-phone):not(.mode-desktop-hp) .sb{transform:translateX(-100%)}
+  body:not(.mode-phone):not(.mode-desktop-hp) .sb.on{transform:translateX(0);box-shadow:var(--shl)}
+  body:not(.mode-phone):not(.mode-desktop-hp) #mbb{position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.38);display:none}
+  body:not(.mode-phone):not(.mode-desktop-hp) #mbb.on{display:block}
+  body:not(.mode-phone):not(.mode-desktop-hp) .main{margin-left:0}
+  body:not(.mode-phone):not(.mode-desktop-hp) .topb{padding:0 12px}
+  body:not(.mode-phone):not(.mode-desktop-hp) .pa{padding:12px}
+  body:not(.mode-phone):not(.mode-desktop-hp) .hmb{display:flex}
+  body:not(.mode-phone):not(.mode-desktop-hp) .bnav{display:flex}
+  body:not(.mode-phone):not(.mode-desktop-hp) .sgr{grid-template-columns:repeat(2,1fr)}
+  body:not(.mode-phone):not(.mode-desktop-hp) #clk{display:none}
+  body:not(.mode-phone):not(.mode-desktop-hp) .dtbl{display:none}
+  body:not(.mode-phone):not(.mode-desktop-hp) .mcard-list{display:block}
+  body:not(.mode-phone):not(.mode-desktop-hp) .ag-grid{grid-template-columns:1fr 1fr}
+  body:not(.mode-phone):not(.mode-desktop-hp) .fgrd{grid-template-columns:repeat(3,1fr)}
+  body:not(.mode-phone):not(.mode-desktop-hp) .cg2{grid-template-columns:1fr}
+  body:not(.mode-phone):not(.mode-desktop-hp) #tco{bottom:72px}
+  body:not(.mode-phone):not(.mode-desktop-hp) .sb-ptk-section{display:none!important;}
+  body:not(.mode-phone):not(.mode-desktop-hp) .peta-container{height:calc(100vh - 56px - var(--bnav-h));}
+  body:not(.mode-phone):not(.mode-desktop-hp) .peta-legend{font-size:.6rem;}
+}
+@media(max-width:480px){
+  body:not(.mode-phone):not(.mode-desktop-hp) .sgr{grid-template-columns:1fr 1fr}
+  body:not(.mode-phone):not(.mode-desktop-hp) .lcard{padding:28px 18px 24px}
+  body:not(.mode-phone):not(.mode-desktop-hp) .frow{grid-template-columns:1fr}
+  body:not(.mode-phone):not(.mode-desktop-hp) .frow3{grid-template-columns:1fr}
+  body:not(.mode-phone):not(.mode-desktop-hp) .ag-grid{grid-template-columns:1fr}
+}

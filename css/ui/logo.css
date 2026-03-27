@@ -1,0 +1,21 @@
+/* SI-PEDAS LOGO */
+.sipedas-logo-text{
+  font-size:1.72rem;font-weight:900;letter-spacing:.40em;text-indent:.40em;text-transform:uppercase;
+  background:linear-gradient(135deg,#ffd84d 0%,#ffb020 40%,#ff6b2b 80%,#ff4d1a 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-align:center;line-height:1;margin:0;
+  filter:drop-shadow(0 2px 8px rgba(255,160,30,.45));
+  animation:sipedasPulse 4s ease-in-out infinite;
+}
+@keyframes sipedasPulse{
+  0%,100%{filter:drop-shadow(0 2px 8px rgba(255,160,30,.4));}
+  50%{filter:drop-shadow(0 2px 16px rgba(255,160,30,.75)) drop-shadow(0 0 28px rgba(255,100,30,.3));}
+}
+.sipedas-glow-sb{
+  font-size:.90rem;font-weight:900;letter-spacing:.30em;text-indent:.40em;text-transform:uppercase;
+  background:linear-gradient(135deg,#ffd84d 0%,#ffb020 45%,#ff6b2b 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  display:block;width:100%;text-align:center;margin:0 auto;line-height:1;
+  filter:drop-shadow(0 1px 6px rgba(255,150,20,.5));
+  animation:sipedasPulse 4s ease-in-out infinite;
+}

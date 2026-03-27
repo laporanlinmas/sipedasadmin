@@ -1,0 +1,450 @@
+/* ══════════════════════════════════════
+   PETA PEDESTRIAN — Map Embed
+══════════════════════════════════════ */
+
+/* ── Popup foto lapangan ─────────────────────────────────*/
+.lf-popup-img-df {
+  width: 100%;
+  max-height: 110px;
+  object-fit: cover;
+  border-radius: 7px;
+  margin: 6px 0 4px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: opacity .15s;
+}
+.lf-popup-img-df:hover {
+  opacity: .88;
+}
+/* Tombol Google Maps di popup */
+.lf-gmaps-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 4px 10px;
+  background: #1e6fd9;
+  color: #fff !important;
+  border-radius: 6px;
+  font-size: .62rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background .14s;
+}
+.lf-gmaps-btn:hover {
+  background: #1660c5;
+}
+
+/* ── Peta container full height fix ─────────────────────*/
+.peta-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px);
+  min-height: 400px;
+}
+body.mode-phone .peta-container {
+  height: calc(var(--pfh) - 86px - var(--bnav-h));
+}
+body.mode-desktop-hp .peta-container {
+  height: calc(100vh - 56px);
+}
+/* Peta page: hilangkan padding .pa agar mepet */
+body .pa:has(.peta-container){padding:0!important;}
+/* Fallback untuk browser lama yang tidak support :has() */
+.peta-outer-pa{padding:0!important;}
+
+.peta-topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 0 10px;flex-shrink:0;}
+.peta-topbar-left{display:flex;align-items:center;gap:10px;}
+.peta-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(8,145,178,.14),rgba(8,145,178,.06));border:1px solid rgba(8,145,178,.22);border-radius:20px;padding:5px 12px;font-size:.66rem;font-weight:700;color:var(--teal);}
+.peta-badge i{font-size:.72rem;}
+.peta-badge .dot-live{width:6px;height:6px;border-radius:50%;background:#0d9268;animation:pls 1.8s infinite;display:inline-block;}
+
+.peta-actions{display:flex;gap:6px;flex-shrink:0;}
+.peta-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--mid);font-size:.68rem;font-weight:700;cursor:pointer;transition:all .16s;text-decoration:none;box-shadow:var(--sh0);}
+.peta-btn:hover{background:var(--bluelo);border-color:var(--blue);color:var(--blue);box-shadow:var(--sh);}
+.peta-btn.peta-btn-primary{background:var(--teal);color:#fff;border-color:var(--teal);box-shadow:0 2px 8px rgba(8,145,178,.3);}
+.peta-btn.peta-btn-primary:hover{background:#0778a0;border-color:#0778a0;transform:translateY(-1px);}
+
+.peta-info-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;flex-shrink:0;}
+.peta-info-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:.62rem;font-weight:700;border:1px solid transparent;}
+.peta-info-chip.route{background:rgba(8,145,178,.09);border-color:rgba(8,145,178,.2);color:var(--teal);}
+.peta-info-chip.hotspot{background:rgba(192,57,43,.09);border-color:rgba(192,57,43,.2);color:var(--red);}
+.peta-info-chip.safe{background:var(--greenl);border-color:rgba(13,146,104,.2);color:var(--green);}
+.peta-info-chip.count{background:var(--amberl);border-color:rgba(217,119,6,.2);color:var(--amber);}
+
+.peta-map-wrap{flex:1;border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:var(--sh);position:relative;min-height:320px;}
+.peta-map-wrap iframe{width:100%;height:100%;border:none;display:block;}
+
+/* Peta map shimmer loading */
+.peta-map-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,#e8edf5 0%,#f4f6fb 50%,#e8edf5 100%);
+  background-size: 200% 200%;
+  animation: shimmer 1.8s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 12px;
+  z-index: 2;
+}
+.peta-map-shimmer.hidden { display: none; }
+.peta-map-shimmer-ico {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(8,145,178,.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: var(--teal);
+}
+.peta-map-shimmer p {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+@keyframes shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+/* Peta legend card */
+.peta-legend{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 15px;margin-top:10px;flex-shrink:0;box-shadow:var(--sh0);}
+.peta-legend-title{font-size:.64rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.peta-legend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:7px;}
+.peta-legend-item{display:flex;align-items:center;gap:8px;font-size:.67rem;font-weight:600;color:var(--mid);}
+.peta-legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.1);}
+.peta-legend-line{width:24px;height:4px;border-radius:4px;flex-shrink:0;}
+
+/* ── Peta MAP MODE TOGGLE ── */
+.peta-mode-toggle {
+  display: flex;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.peta-mode-btn {
+  flex: 1;
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all .16s;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+}
+.peta-mode-btn:last-child { border-right: none; }
+.peta-mode-btn.on {
+  background: var(--teal);
+  color: #fff;
+}
+.peta-mode-btn i { font-size: .76rem; }
+
+/* ── LEAFLET OVERRIDES ── */
+#mymaps-wrap iframe {
+  pointer-events: auto;
+}
+/* Clip container MyMaps */
+#mymaps-wrap > div {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ── Loading overlay KHUSUS jendela Leaflet ───────────────
+   Bukan fullscreen, hanya di dalam kotak peta           */
+#lf-loader {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(235,239,248,.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 800;
+  border-radius: 12px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* ── Toggle Foto Lapangan (versi kecil) ─────────── */
+#lf-toggle-df {
+  position: absolute;
+  bottom: 25px;
+  left: 10px;
+  z-index: 999;
+  background: var(--navy2);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-size: .62rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0,0,0,.25);
+  pointer-events: auto;
+}
+
+#lf-toggle-df span {
+  padding: 5px 9px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  opacity: .75;
+}
+
+#df-toggle-btn {
+  background: rgba(255,255,255,.08);
+  border: none;
+  border-left: 1px solid rgba(255,255,255,.12);
+  padding: 5px 10px;
+  color: #fff;
+  font-size: .62rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: background .16s;
+  font-family: var(--font);
+}
+
+#df-toggle-btn:hover {
+  background: rgba(255,255,255,.18);
+}
+/* ── Leaflet custom control buttons (reset & locate) ─────*/
+.leaflet-bar a {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.leaflet-bar a i {
+  font-size: .8rem;
+  color: #333;
+}
+.leaflet-container {
+  font-family: var(--font) !important;
+  border-radius: 12px;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 10px !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,.18) !important;
+  border: 1px solid var(--border);
+}
+.leaflet-popup-content {
+  margin: 10px 14px !important;
+  font-family: var(--font) !important;
+  font-size: .76rem !important;
+  line-height: 1.6 !important;
+}
+.leaflet-popup-tip-container { margin-top: -1px; }
+.lf-popup-title {
+  font-size: .8rem;
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.lf-popup-badge {
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:20px;
+  font-size:.58rem;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  margin-bottom:5px;
+}
+.lf-popup-row {
+  display:flex;
+  gap:6px;
+  align-items:flex-start;
+  font-size:.7rem;
+  color:var(--mid);
+  margin-bottom:2px;
+}
+.lf-popup-row i { width:14px; flex-shrink:0; margin-top:2px; }
+.lf-popup-img {
+  width:100%;
+  max-height:100px;
+  object-fit:cover;
+  border-radius:6px;
+  margin-top:6px;
+  border:1px solid var(--border);
+}
+
+/* Legend bar Leaflet */
+.peta-lf-legend {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 10px 14px;
+  margin-top: 8px;
+  flex-shrink: 0;
+  box-shadow: var(--sh0);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.peta-lf-legend-title {
+  font-size: .62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--muted);
+  width: 100%;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.peta-lf-leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .64rem;
+  font-weight: 600;
+  color: var(--mid);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 9px;
+}
+
+/* Simbol grid di form layer */
+.mlayer-simbol-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 7px;
+  margin-bottom: 10px;
+}
+.msimbol-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border: 2px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+  cursor: pointer;
+  font-size: .58rem;
+  font-weight: 700;
+  color: var(--muted);
+  transition: all .15s;
+}
+.msimbol-btn:hover {
+  border-color: var(--blue);
+  background: var(--bluelo);
+  color: var(--blue);
+}
+.msimbol-btn.on {
+  border-color: var(--teal);
+  background: var(--teall);
+  color: var(--teal);
+}
+.msimbol-btn .simbol-ico { font-size: 1.1rem; }
+
+
+/* Leaflet layer list (dalam modal) */
+.layer-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  margin-bottom: 6px;
+  background: var(--card);
+  transition: all .15s;
+}
+.layer-list-item:hover { box-shadow: var(--sh0); }
+.layer-list-item.inactive { opacity: .45; }
+.layer-item-ico {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .85rem;
+  flex-shrink: 0;
+}
+.layer-item-info { flex: 1; min-width: 0; }
+.layer-item-name {
+  font-size: .76rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.layer-item-sub { font-size: .6rem; color: var(--muted); margin-top: 1px; }
+.layer-item-acts { display: flex; gap: 4px; flex-shrink: 0; }
+
+/* Detail Foto marker badge */
+.df-marker-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  font-size:.58rem;
+  font-weight:800;
+  padding:2px 7px;
+  border-radius:20px;
+  background:rgba(30,111,217,.12);
+  color:var(--blue);
+  border:1px solid rgba(30,111,217,.2);
+  margin-top:4px;
+}
+
+/* Color swatches */
+.color-swatches {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform .13s, border-color .13s;
+}
+.color-swatch:hover { transform: scale(1.15); }
+.color-swatch.on { border-color: var(--text); transform: scale(1.15); }
+
+/* Peta stat chips */
+.peta-stat-chips {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-bottom:8px;
+  flex-shrink:0;
+}
+.peta-stat-chip {
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:.62rem;
+  font-weight:700;
+  border:1px solid transparent;
+}
