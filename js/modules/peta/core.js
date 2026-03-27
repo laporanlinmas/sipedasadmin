@@ -84,12 +84,38 @@ var PAPER_SIZES = {
 // ─────────────────────────────────────────────────────────────────────────────
 //  DATA STATIS
 // ─────────────────────────────────────────────────────────────────────────────
+var STREET_BOUNDS = [
+  { 
+    id: 'diponegoro',
+    // Lintang (Y): -7.872245 s/d -7.864721 | Bujur (X): 111.460848 s/d 111.461663
+    minLat: -7.872245, maxLat: -7.864721, 
+    minLng: 111.460848, maxLng: 111.461663 
+  },
+  { 
+    id: 'jenderal_soedirman',
+    // Lintang (Y): -7.872330 s/d -7.871480 | Bujur (X): 111.461556 s/d 111.470525
+    minLat: -7.872330, maxLat: -7.871480, 
+    minLng: 111.461556, maxLng: 111.470525 
+  },
+  { 
+    id: 'hos_cokroaminoto',
+    // Lintang (Y): -7.871501 s/d -7.864891 | Bujur (X): 111.469452 s/d 111.470504
+    minLat: -7.871501, maxLat: -7.864891, 
+    minLng: 111.469452, maxLng: 111.470504 
+  },
+  { 
+    id: 'urip_soemoharjo',
+    // Lintang (Y): -7.865167 s/d -7.864636 | Bujur (X): 111.461256 s/d 111.469474
+    minLat: -7.865167, maxLat: -7.864636, 
+    minLng: 111.461256, maxLng: 111.469474 
+  }
+];
+
 var JALAN_GROUPS = [
+  { id: 'diponegoro',         label: 'Jl. Diponegoro',         ico: 'fa-road',             warna: '#c0392b' },
   { id: 'jenderal_soedirman', label: 'Jl. Jenderal Soedirman', ico: 'fa-road',             warna: '#607d8b' },
   { id: 'hos_cokroaminoto',   label: 'Jl. HOS Cokroaminoto',   ico: 'fa-road',             warna: '#0d9268' },
   { id: 'urip_soemoharjo',    label: 'Jl. Urip Soemoharjo',    ico: 'fa-road',             warna: '#d97706' },
-  { id: 'soekarno_hatta',     label: 'Jl. Soekarno Hatta',     ico: 'fa-road',             warna: '#7c3aed' },
-  { id: 'diponegoro',         label: 'Jl. Diponegoro',         ico: 'fa-road',             warna: '#c0392b' },
   { id: 'lainnya',            label: 'Area Lainnya',           ico: 'fa-map-location-dot', warna: '#1e6fd9' }
 ];
 
