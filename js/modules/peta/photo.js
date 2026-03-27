@@ -40,12 +40,32 @@ function _buildStreetPanel() {
   p.innerHTML = h;
 }
 
+function _getStreetBoundsByCoords(lat, lng) {
+  if (!STREET_BOUNDS || !lat || !lng) return 'lainnya';
+  for (var i = 0; i < STREET_BOUNDS.length; i++) {
+    var bound = STREET_BOUNDS[i];
+    if (lat >= bound.minLat && lat <= bound.maxLat && 
+        lng >= bound.minLng && lng <= bound.maxLng) {
+      return bound.id;
+    }
+  }
+  return 'lainnya';
+}
+
 function _resolveKelompok(pt) {
+  // Cek berdasarkan koordinat terhadap STREET_BOUNDS
+  if (pt.lat && pt.lng) {
+    var streetId = _getStreetBoundsByCoords(pt.lat, pt.lng);
+    if (streetId !== 'lainnya') return streetId;
+  }
+  
+  // Fallback ke kelompokJalan jika ada, untuk data yang sudah ada field ini
   var k = (pt.kelompokJalan||'').toString().toLowerCase().trim();
   if (k==='diponegoro')                                  return 'diponegoro';
   if (k==='jenderal soedirman'||k==='jenderal_soedirman'||k==='jend. soedirman') return 'jenderal_soedirman';
   if (k==='hos cokroaminoto'||k==='hos_cokroaminoto')   return 'hos_cokroaminoto';
   if (k==='urip soemoharjo'||k==='urip_soemoharjo')     return 'urip_soemoharjo';
+  
   return 'lainnya';
 }
 
