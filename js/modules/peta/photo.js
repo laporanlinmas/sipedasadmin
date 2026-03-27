@@ -42,11 +42,10 @@ function _buildStreetPanel() {
 
 function _resolveKelompok(pt) {
   var k = (pt.kelompokJalan||'').toString().toLowerCase().trim();
+  if (k==='diponegoro')                                  return 'diponegoro';
   if (k==='jenderal soedirman'||k==='jenderal_soedirman'||k==='jend. soedirman') return 'jenderal_soedirman';
   if (k==='hos cokroaminoto'||k==='hos_cokroaminoto')   return 'hos_cokroaminoto';
   if (k==='urip soemoharjo'||k==='urip_soemoharjo')     return 'urip_soemoharjo';
-  if (k==='soekarno hatta'||k==='soekarno_hatta')       return 'soekarno_hatta';
-  if (k==='diponegoro')                                  return 'diponegoro';
   return 'lainnya';
 }
 
