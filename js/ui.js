@@ -792,7 +792,7 @@ function loadSettings() {
     return;
   }
   setNav('set');
-  setPage('Pengaturan Sistem', 'Kelola template cetak & konfigurasi sistem');
+  setPage('Pengaturan Sistem', 'Kelola akun, template cetak & konfigurasi');
   sbClose();
 
   // Reset binding flags so previews get rebound on each visit
@@ -840,7 +840,36 @@ function renderSettings(data) {
 
   var h = '<div class="fu" style="max-width:960px;margin:0 auto">'
 
+    // ─── AKUN SECTION ───────────────────────────────────────────
+    + '<div class="panel" style="margin-bottom:18px">'
+    + '  <div class="phd"><span class="ptl"><i class="fas fa-user-shield"></i> Manajemen Akun</span></div>'
+    + '  <div class="mbd" style="padding:16px;display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px">'
 
+    // Ganti Password
+    + '    <div class="set-card">'
+    + '      <p class="set-card-ttl" style="color:var(--blue)"><i class="fas fa-key"></i> Ganti Password</p>'
+    + '      <div class="fgrp"><label class="flbl">Password Lama</label>'
+    + '        <div class="pw-field-wrap"><input type="password" class="fctl" id="set-old-pass"><button class="pw-eye" onclick="toggleSetEye(\'set-old-pass\',this)"><i class="fas fa-eye"></i></button></div>'
+    + '      </div>'
+    + '      <div class="fgrp"><label class="flbl">Password Baru</label>'
+    + '        <div class="pw-field-wrap"><input type="password" class="fctl" id="set-new-pass"><button class="pw-eye" onclick="toggleSetEye(\'set-new-pass\',this)"><i class="fas fa-eye"></i></button></div>'
+    + '      </div>'
+    + '      <button class="bp" style="width:100%" onclick="submitChangePass()"><i class="fas fa-save"></i> Perbarui Password</button>'
+    + '    </div>'
+
+    // Buat Akun
+    + '    <div class="set-card">'
+    + '      <p class="set-card-ttl" style="color:var(--green)"><i class="fas fa-user-plus"></i> Buat Akun Baru</p>'
+    + '      <div class="frow"><div class="fcol"><label class="flbl">Username</label><input class="fctl" id="set-new-un"></div>'
+    + '      <div class="fcol"><label class="flbl">Role</label><select class="fctl" id="set-new-rl"><option value="user">User</option><option value="admin">Admin</option></select></div></div>'
+    + '      <div class="fgrp"><label class="flbl">Nama Lengkap</label><input class="fctl" id="set-new-nm"></div>'
+    + '      <div class="fgrp"><label class="flbl">Password</label>'
+    + '        <div class="pw-field-wrap"><input type="password" class="fctl" id="set-new-pw"><button class="pw-eye" onclick="toggleSetEye(\'set-new-pw\',this)"><i class="fas fa-eye"></i></button></div>'
+    + '      </div>'
+    + '      <button class="bp" style="width:100%;background:var(--green)" onclick="submitCreateAcc()"><i class="fas fa-user-check"></i> Daftarkan Akun</button>'
+    + '    </div>'
+    + '  </div>'
+    + '</div>'
 
     // ─── TEMPLATE CETAK PDF SINGLE ──────────────────────────────
     + '<div class="panel" style="margin-bottom:18px">'
@@ -1105,6 +1134,45 @@ function bindSettingsKolPreview() {
   });
 }
 
+function toggleSetEye(inputId, btn) {
+  var inp = G(inputId);
+  if (!inp) return;
+  var ico = btn.querySelector('i');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    if (ico) ico.className = 'fas fa-eye-slash';
+  } else {
+    inp.type = 'password';
+    if (ico) ico.className = 'fas fa-eye';
+  }
+}
+
+function submitChangePass() {
+  var oldP = G('set-old-pass').value, newP = G('set-new-pass').value;
+  if (!oldP || !newP) { toast('Password lama & baru wajib diisi.', 'er'); return; }
+  showLoad('Memperbarui...');
+  apiPost('changePassword', { oldPass: oldP, newPass: newP, username: SES.username }).then(function (res) {
+    hideLoad();
+    if (res.success) { toast('Password berhasil diganti.', 'ok'); G('set-old-pass').value = ''; G('set-new-pass').value = ''; }
+    else toast(res.message, 'er');
+  });
+}
+
+function submitCreateAcc() {
+  var un = G('set-new-un').value.trim(), role = G('set-new-rl').value;
+  var nm = G('set-new-nm').value.trim(), pw = G('set-new-pw').value;
+  if (!un || !nm || !pw) { toast('Semua field akun baru wajib diisi.', 'er'); return; }
+  showLoad('Mendaftarkan...');
+  apiPost('createAccount', { username: un, role: role, namaLengkap: nm, password: pw }).then(function (res) {
+    hideLoad();
+    if (res.success) { toast('Akun ' + un + ' berhasil dibuat.', 'ok'); G('set-new-un').value = ''; G('set-new-nm').value = ''; G('set-new-pw').value = ''; }
+    else toast(res.message, 'er');
+  });
+}
+
+function submitUpdatePdfSettings() {
+  var p = {
+    pdf_judul: (G('set-pdf-judul')||{}).value || '',
     pdf_nospt: (G('set-pdf-nospt')||{}).value || '',
     pdf_tujuan: (G('set-pdf-tujuan')||{}).value || '',
     pdf_anggota: (G('set-pdf-anggota')||{}).value || '',
