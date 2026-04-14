@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SENAPATI — Portal Dashboard Bidang Linmas Kabupaten Ponorogo</title>
+  <meta name="description" content="Portal Dashboard Terpadu Bidang Perlindungan Masyarakat (Linmas) Kabupaten Ponorogo — Sentral Navigasi Pengelolaan Agenda dan Tata Informasi">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" type="image/png" href="/assets/icon-32.png" />
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="/app/style.css" />
+  <style>
+    /* ══════════════════════════════════════════════
+       LINMAS PORTAL — TOP BAR LAYOUT OVERRIDES
+    ══════════════════════════════════════════════ */
+    :root {
+      --linmas-red: #dc2626;
+      --linmas-red-lt: rgba(220,38,38,.1);
+      --linmas-gold: #d97706;
+      --linmas-teal: #0891b2;
+      --linmas-green: #16a34a;
+      --topbar-h: 64px;
+      --nav-h: 52px;
+    }
+
+    /* Hide old sidebar structure */
+    #sidebar, .sidebar-overlay { display: none !important; }
+
+    body { background: var(--body-bg); }
+
+    /* ── TOP BAR (brand + user) ────────────────── */
+    #portal-topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: var(--topbar-h);
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px;
+      gap: 16px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 2px 20px rgba(0,0,0,.12);
+    }
+    .portal-brand {
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+      text-decoration: none;
+    }
+    .portal-brand img { width: 38px; height: 38px; object-fit: contain; }
+    .portal-brand-text h1 {
+      font-size: .95rem; font-weight: 800; letter-spacing: 1px; color: var(--text-main);
+      line-height: 1; margin: 0;
+    }
+    .portal-brand-text span {
+      font-size: .6rem; color: var(--text-muted); letter-spacing: .04em; font-weight: 500;
+    }
+    .portal-brand-badge {
+      background: linear-gradient(135deg, var(--linmas-red), #b91c1c);
+      color: #fff; font-size: .55rem; font-weight: 700; letter-spacing: .08em;
+      padding: 3px 8px; border-radius: 20px; text-transform: uppercase; flex-shrink: 0;
+    }
+
+    /* ── TOPBAR RIGHT ── */
+    .portal-topbar-right {
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .topbar-icon-btn {
+      width: 36px; height: 36px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--body-bg);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-muted); font-size: .95rem;
+      transition: all .2s;
+    }
+    .topbar-icon-btn:hover { background: var(--primary-lt); color: var(--primary); border-color: var(--primary); }
+    .topbar-clock {
+      font-family: 'JetBrains Mono', monospace; font-size: .82rem;
+      color: var(--text-muted); letter-spacing: .08em;
+    }
+    .portal-user-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--body-bg); border: 1px solid var(--border);
+      border-radius: 24px; padding: 5px 12px 5px 5px; cursor: pointer;
+      transition: all .2s;
+    }
+    .portal-user-chip:hover { border-color: var(--primary); }
+    .portal-user-av {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--linmas-red), #b91c1c);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-size: .78rem; font-weight: 700;
+    }
+    .portal-user-name { font-size: .78rem; font-weight: 600; color: var(--text-main); max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .logout-portal-btn {
+      height: 36px; padding: 0 14px; border-radius: 10px;
+      border: 1px solid rgba(220,38,38,.3); background: rgba(220,38,38,.08);
+      color: var(--linmas-red); font-size: .78rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: all .2s;
+    }
+    .logout-portal-btn:hover { background: rgba(220,38,38,.18); }
+
+    /* ── NAV BAR (main menu) ───────────────────── */
+    #portal-navbar {
+      position: fixed; top: var(--topbar-h); left: 0; right: 0; z-index: 999;
+      height: var(--nav-h);
+      background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%);
+      border-bottom: 2px solid var(--linmas-red);
+      display: flex; align-items: center; padding: 0 20px;
+      gap: 2px; overflow-x: auto; scrollbar-width: none;
+    }
+    #portal-navbar::-webkit-scrollbar { display: none; }
+    .nav-menu-item {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 16px; border-radius: 8px;
+      font-size: .8rem; font-weight: 600; color: rgba(255,255,255,.65);
+      cursor: pointer; white-space: nowrap; text-decoration: none;
+      transition: all .2s; border: 1px solid transparent; flex-shrink: 0;
+      position: relative;
+    }
+    .nav-menu-item:hover { color: #fff; background: rgba(255,255,255,.08); }
+    .nav-menu-item.active {
+      color: #fff; background: rgba(220,38,38,.2);
+      border-color: rgba(220,38,38,.4);
+    }
+    .nav-menu-item.active::after {
+      content: ''; position: absolute; bottom: -10px; left: 50%;
+      transform: translateX(-50%);
+      width: 28px; height: 3px; border-radius: 3px 3px 0 0;
+      background: var(--linmas-red);
+    }
+    .nav-menu-item i { font-size: .9rem; }
+    .nav-coming-badge {
+      font-size: .5rem; padding: 2px 6px; border-radius: 10px;
+      background: rgba(255,255,255,.12); color: rgba(255,255,255,.5);
+      font-weight: 700; letter-spacing: .04em; margin-left: 2px;
+    }
+    .nav-menu-divider {
+      width: 1px; height: 22px; background: rgba(255,255,255,.1);
+      margin: 0 6px; flex-shrink: 0;
+    }
+
+    /* ── CONTENT AREA ── */
+    #app-shell {
+      padding-top: calc(var(--topbar-h) + var(--nav-h));
+    }
+    #main-content {
+      margin-left: 0 !important;
+      padding: 24px 24px 40px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+    /* Remove old topbar */
+    #topbar { display: none !important; }
+
+    /* ── LINMAS HERO ── */
+    .linmas-hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      border: 1px solid rgba(220,38,38,.2);
+      border-radius: 16px; padding: 28px 32px;
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
+      margin-bottom: 24px; position: relative; overflow: hidden;
+    }
+    .linmas-hero::before {
+      content: ''; position: absolute; top: -80px; right: -80px;
+      width: 280px; height: 280px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(220,38,38,.12) 0%, transparent 70%);
+    }
+    .linmas-hero-text h2 {
+      font-size: 1.5rem; font-weight: 800; color: #fff; margin: 0 0 6px;
+      line-height: 1.2;
+    }
+    .linmas-hero-text h2 span { color: var(--linmas-red); }
+    .linmas-hero-text p { font-size: .85rem; color: rgba(255,255,255,.6); margin: 0; }
+    .linmas-hero-meta {
+      display: flex; gap: 24px; flex-wrap: wrap;
+    }
+    .linmas-hero-stat {
+      text-align: center; position: relative; z-index: 1;
+    }
+    .linmas-hero-stat .val {
+      font-size: 1.8rem; font-weight: 800; color: #fff;
+      font-family: 'JetBrains Mono', monospace; line-height: 1;
+    }
+    .linmas-hero-stat .lbl { font-size: .65rem; color: rgba(255,255,255,.5); margin-top: 4px; text-transform: uppercase; letter-spacing: .06em; }
+
+    /* ── MODULE CARDS (quick nav) ── */
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px; margin-bottom: 24px;
+    }
+    .module-card {
+      background: var(--panel-bg); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px;
+      cursor: pointer; transition: all .25s; position: relative; overflow: hidden;
+      display: flex; flex-direction: column; gap: 12px;
+      text-decoration: none;
+    }
+    .module-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: rgba(220,38,38,.3); }
+    .module-card.coming { cursor: default; opacity: .65; }
+    .module-card.coming:hover { transform: none; box-shadow: none; }
+    .module-card-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+    .module-card h3 { font-size: .92rem; font-weight: 700; color: var(--text-main); margin: 0; }
+    .module-card p { font-size: .75rem; color: var(--text-muted); margin: 0; line-height: 1.5; }
+    .module-card-badge {
+      position: absolute; top: 12px; right: 12px;
+      font-size: .55rem; padding: 2px 8px; border-radius: 20px;
+      font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    }
+    .badge-online { background: rgba(22,163,74,.15); color: var(--linmas-green); }
+    .badge-dev { background: rgba(217,119,6,.12); color: var(--linmas-gold); }
+
+    /* ── STATS ROW ── */
+    .linmas-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 14px; margin-bottom: 24px;
+    }
+    .linmas-stat-card {
+      background: var(--panel-bg); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .linmas-stat-card .sttl {
+      font-size: .7rem; color: var(--text-muted); text-transform: uppercase;
+      letter-spacing: .06em; font-weight: 600;
+    }
+    .linmas-stat-card .sval {
+      font-size: 1.7rem; font-weight: 800; color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace; line-height: 1;
+    }
+    .linmas-stat-card .sico {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+
+    /* ── COMING SOON MODAL ── */
+    #coming-modal {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.5); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+    }
+    #coming-modal.open { display: flex; }
+    .coming-box {
+      background: var(--panel-bg); border: 1px solid var(--border);
+      border-radius: 20px; padding: 40px; max-width: 420px; width: 90%;
+      text-align: center; position: relative;
+    }
+    .coming-icon { font-size: 3rem; margin-bottom: 16px; }
+    .coming-box h3 { font-size: 1.2rem; font-weight: 800; margin: 0 0 8px; color: var(--text-main); }
+    .coming-box p { font-size: .85rem; color: var(--text-muted); line-height: 1.6; margin: 0 0 20px; }
+    .coming-close-btn {
+      background: var(--primary); color: #fff; border: none; border-radius: 10px;
+      padding: 10px 28px; font-size: .85rem; font-weight: 700; cursor: pointer;
+      transition: all .2s;
+    }
+    .coming-close-btn:hover { opacity: .85; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      #portal-topbar { padding: 0 12px; }
+      #main-content { padding: 16px 12px 32px; }
+      .portal-user-name { display: none; }
+      .topbar-clock { display: none; }
+      .linmas-hero { flex-direction: column; }
+      .linmas-hero-meta { justify-content: center; }
+      .portal-brand-badge { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="spinner-overlay">
+    <div class="spinner-box">
+      <div class="spin"></div>
+      <div style="font-weight:700;color:var(--text-main)" id="spinner-label">Memproses...</div>
+      <div style="font-size:.8rem;color:var(--text-muted);margin-top:4px">Mohon tunggu sebentar</div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <!-- PREVIEW MODAL -->
+  <div id="preview-overlay">
+    <div class="preview-box">
+      <div class="preview-header">
+        <h3><i class="bi bi-file-earmark-text"></i> Preview Dokumen</h3>
+        <button onclick="closePreview()" style="background:none;border:none;cursor:pointer;color:#fff;font-size:1.5rem"><i class="bi bi-x"></i></button>
+      </div>
+      <div class="preview-body">
+        <iframe id="preview-frame" src=""></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMING SOON MODAL -->
+  <div id="coming-modal">
+    <div class="coming-box">
+      <div class="coming-icon">🚧</div>
+      <h3 id="coming-title">Fitur Segera Hadir</h3>
+      <p id="coming-desc">Fitur ini masih dalam tahap pengembangan dan akan segera tersedia. Nantikan pembaruan selanjutnya.</p>
+      <button class="coming-close-btn" onclick="document.getElementById('coming-modal').classList.remove('open')">Tutup</button>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="view-login">
+    <div class="login-wrapper">
+      <!-- KOLOM KIRI: INFO PANEL -->
+      <div class="login-info-panel">
+        <div class="login-info-logo">
+          <img src="/assets/icon-192.png" alt="Logo SENAPATI">
+        </div>
+        <div class="login-info-badge">BIDANG LINMAS</div>
+        <h2 class="login-info-title">Portal Dashboard Perlindungan Masyarakat</h2>
+        <p class="login-info-subtitle">Kabupaten Ponorogo</p>
+        <div class="login-info-features">
+          <div class="login-feature-item"><i class="bi bi-person-walking"></i><span>Monitoring Pedestrian Satlinmas</span></div>
+          <div class="login-feature-item"><i class="bi bi-shield-fill-check"></i><span>Monitoring Poskamling</span></div>
+          <div class="login-feature-item"><i class="bi bi-heart-pulse-fill"></i><span>Posyandu — Segera Hadir</span></div>
+          <div class="login-feature-item"><i class="bi bi-people-fill"></i><span>Data Satlinmas — Segera Hadir</span></div>
+          <div class="login-feature-item"><i class="bi bi-cloud-lightning-rain-fill"></i><span>Kebencanaan — Segera Hadir</span></div>
+          <div class="login-feature-item"><i class="bi bi-envelope-fill"></i><span>Persuratan — Segera Hadir</span></div>
+        </div>
+        <div class="login-info-footer">&copy; 2026 Bidang SDA dan Linmas — Kabupaten Ponorogo</div>
+      </div>
+
+      <!-- KOLOM KANAN: FORM LOGIN -->
+      <div class="login-form-panel">
+        <div class="login-form-inner">
+          <div class="login-form-logo">
+            <img src="/assets/icon-192.png" alt="Logo" style="width:52px;height:52px;object-fit:contain;display:block;margin:0 auto 12px;">
+          </div>
+          <div class="login-title">
+            <h2>Masuk ke Portal Linmas</h2>
+            <p>Masukkan kredensial akun Anda untuk melanjutkan</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" id="login-username" class="form-control" placeholder="Masukkan username" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div style="position:relative">
+              <input type="password" id="login-password" class="form-control" placeholder="Masukkan password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
+              <button type="button" onclick="togglePwd('login-password',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);border:none;background:none;cursor:pointer;color:rgba(255,255,255,.5)">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+          <button class="btn-login" onclick="doLogin()">
+            <i class="bi bi-box-arrow-in-right"></i> Masuk ke Sistem
+          </button>
+          <div class="login-badge"><i class="bi bi-shield-lock"></i> Akses aman &bull; Data terenkripsi</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP SHELL -->
+  <div id="app-shell">
+
+    <!-- Dummy sidebar (required by old JS) hidden -->
+    <nav id="sidebar" style="display:none"></nav>
+
+    <!-- ═══ PORTAL TOP BAR ═══════════════════════════════ -->
+    <header id="portal-topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <a class="portal-brand" href="#dashboard" onclick="navigateTo('dashboard')">
+          <img src="/assets/icon-192.png" alt="Logo SENAPATI">
+          <div class="portal-brand-text">
+            <h1>SENAPATI</h1>
+            <span>Portal Bidang Linmas · Ponorogo</span>
+          </div>
+        </a>
+        <div class="portal-brand-badge">LINMAS</div>
+      </div>
+
+      <div class="portal-topbar-right">
+        <div class="topbar-clock" id="clock">--:--</div>
+        <button class="topbar-icon-btn" id="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+          <i class="bi bi-moon-fill" id="theme-icon"></i>
+        </button>
+        <div class="portal-user-chip" id="portal-user-chip">
+          <div class="portal-user-av" id="user-avatar">A</div>
+          <div class="portal-user-name" id="user-nama">Admin</div>
+        </div>
+        <button class="logout-portal-btn" onclick="doLogout()">
+          <i class="bi bi-box-arrow-right"></i> Keluar
+        </button>
+      </div>
+    </header>
+
+    <!-- ═══ NAVBAR (MENU UTAMA) ════════════════════════════ -->
+    <nav id="portal-navbar">
+      <a class="nav-menu-item active" id="nav-item-dashboard" onclick="navigateTo('dashboard')">
+        <i class="bi bi-grid-1x2-fill"></i> Dashboard
+      </a>
+      <div class="nav-menu-divider"></div>
+      <a class="nav-menu-item" id="nav-item-pedestrian" href="/pedestrian/" target="_self">
+        <i class="bi bi-person-walking"></i> Pedestrian
+      </a>
+      <a class="nav-menu-item coming" onclick="showComingSoon('Poskamling','Modul Poskamling saat ini sedang dalam persiapan dan pengembangan sistem.')">
+        <i class="bi bi-shield-fill-check"></i> Poskamling
+        <span class="nav-coming-badge">Segera</span>
+      </a>
+      <div class="nav-menu-divider"></div>
+      <a class="nav-menu-item coming" onclick="showComingSoon('Posyandu','Modul Posyandu sedang dalam tahap pengembangan. Akan segera hadir untuk membantu pemantauan kesehatan masyarakat.')">
+        <i class="bi bi-heart-pulse-fill"></i> Posyandu
+        <span class="nav-coming-badge">Segera</span>
+      </a>
+      <a class="nav-menu-item coming" onclick="showComingSoon('Data Satlinmas','Modul Data Satlinmas sedang dalam tahap pengembangan. Akan segera hadir untuk pengelolaan data anggota Satlinmas.')">
+        <i class="bi bi-people-fill"></i> Data Satlinmas
+        <span class="nav-coming-badge">Segera</span>
+      </a>
+      <a class="nav-menu-item coming" onclick="showComingSoon('Kebencanaan','Modul Kebencanaan sedang dalam tahap pengembangan. Akan segera hadir untuk manajemen data dan laporan kebencanaan.')">
+        <i class="bi bi-cloud-lightning-rain-fill"></i> Kebencanaan
+        <span class="nav-coming-badge">Segera</span>
+      </a>
+      <a class="nav-menu-item coming" onclick="showComingSoon('Persuratan','Modul Persuratan sedang dalam tahap pengembangan. Akan segera hadir untuk manajemen surat menyurat Bidang Linmas.')">
+        <i class="bi bi-envelope-fill"></i> Persuratan
+        <span class="nav-coming-badge">Segera</span>
+      </a>
+    </nav>
+
+    <!-- ═══ MAIN CONTENT ════════════════════════════════════ -->
+    <main id="main-content">
+
+      <!-- ══ DASHBOARD ════════════════════════════════════ -->
+      <div id="page-dashboard" class="view active">
+        <!-- HERO -->
+        <div class="linmas-hero">
+          <div class="linmas-hero-text">
+            <h2>Dashboard <span>Bidang Linmas</span></h2>
+            <p>Kabupaten Ponorogo &mdash; Sistem Informasi Terpadu Perlindungan Masyarakat</p>
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+              <span style="background:rgba(22,163,74,.15);color:#16a34a;font-size:.7rem;font-weight:700;padding:4px 12px;border-radius:20px;"><i class="bi bi-circle-fill" style="font-size:.4rem"></i> Sistem Online</span>
+              <span id="hero-date" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);font-size:.7rem;font-weight:600;padding:4px 12px;border-radius:20px;">—</span>
+            </div>
+          </div>
+          <div class="linmas-hero-meta" id="hero-meta">
+            <div class="linmas-hero-stat">
+              <div class="val" id="hero-patroli">—</div>
+              <div class="lbl">Total Patroli</div>
+            </div>
+            <div class="linmas-hero-stat">
+              <div class="val" id="hero-poskamling">—</div>
+              <div class="lbl">Pos Kamling Aktif</div>
+            </div>
+            <div class="linmas-hero-stat">
+              <div class="val" id="hero-satlinmas">—</div>
+              <div class="lbl">Anggota Satlinmas</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STATS ROW -->
+        <div class="linmas-stats-grid">
+          <div class="linmas-stat-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div class="sttl">Laporan Patroli</div>
+              <div class="sico" style="background:rgba(8,145,178,.12);color:var(--linmas-teal)"><i class="bi bi-person-walking"></i></div>
+            </div>
+            <div class="sval" id="stat-patroli">—</div>
+            <span style="font-size:.68rem;color:var(--text-muted)">Laporan pedestrian tercatat</span>
+          </div>
+          <div class="linmas-stat-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div class="sttl">Poskamling Aktif</div>
+              <div class="sico" style="background:rgba(22,163,74,.12);color:var(--linmas-green)"><i class="bi bi-shield-fill-check"></i></div>
+            </div>
+            <div class="sval" id="stat-poskamling">—</div>
+            <span style="font-size:.68rem;color:var(--text-muted)">Pos kamling terdaftar</span>
+          </div>
+          <div class="linmas-stat-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div class="sttl">Laporan Kamling</div>
+              <div class="sico" style="background:rgba(217,119,6,.12);color:var(--linmas-gold)"><i class="bi bi-file-earmark-text-fill"></i></div>
+            </div>
+            <div class="sval" id="stat-lapkamling">—</div>
+            <span style="font-size:.68rem;color:var(--text-muted)">Laporan kegiatan kamling</span>
+          </div>
+          <div class="linmas-stat-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div class="sttl">Anggota Satlinmas</div>
+              <div class="sico" style="background:rgba(220,38,38,.1);color:var(--linmas-red)"><i class="bi bi-people-fill"></i></div>
+            </div>
+            <div class="sval" id="stat-anggota">—</div>
+            <span style="font-size:.68rem;color:var(--text-muted)">Data anggota satlinmas</span>
+          </div>
+          <div class="linmas-stat-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div class="sttl">Posyandu</div>
+              <div class="sico" style="background:rgba(124,58,237,.1);color:#7c3aed"><i class="bi bi-heart-pulse-fill"></i></div>
+            </div>
+            <div class="sval" style="color:var(--text-muted);font-size:1rem;">Segera</div>
+            <span style="font-size:.68rem;color:var(--text-muted)">Fitur dalam pengembangan</span>
+          </div>
+          <div class="linmas-stat-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div class="sttl">Kebencanaan</div>
+              <div class="sico" style="background:rgba(220,38,38,.08);color:var(--linmas-red)"><i class="bi bi-cloud-lightning-rain-fill"></i></div>
+            </div>
+            <div class="sval" style="color:var(--text-muted);font-size:1rem;">Segera</div>
+            <span style="font-size:.68rem;color:var(--text-muted)">Fitur dalam pengembangan</span>
+          </div>
+        </div>
+
+        <!-- MODULE CARDS (quick-access) -->
+        <div class="page-header" style="margin-bottom:16px;">
+          <div>
+            <h1 style="font-size:1rem;">Akses Modul</h1>
+            <p style="font-size:.8rem;">Pilih modul yang ingin dibuka</p>
+          </div>
+          <button class="btn-primary-custom" onclick="loadLinmasDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+        </div>
+        <div class="module-grid">
+          <!-- PEDESTRIAN -->
+          <a class="module-card" onclick="openModuleFrame('pedestrian','PEDESTRIAN','/pedestrian/')" style="cursor:pointer">
+            <span class="module-card-badge badge-online">Online</span>
+            <div class="module-card-icon" style="background:rgba(8,145,178,.12);color:var(--linmas-teal)">
+              <i class="bi bi-person-walking"></i>
+            </div>
+            <div>
+              <h3>PEDESTRIAN</h3>
+              <p>Sistem Monitoring Program Pedestrian · Laporan Patroli, Rekap & Peta</p>
+            </div>
+          </a>
+          <!-- POSKAMLING -->
+          <div class="module-card coming" onclick="showComingSoon('Poskamling','Modul Poskamling saat ini sedang dalam persiapan dan pengembangan sistem.')">
+            <span class="module-card-badge badge-dev">Segera Hadir</span>
+            <div class="module-card-icon" style="background:rgba(22,163,74,.12);color:var(--linmas-green)">
+              <i class="bi bi-shield-fill-check"></i>
+            </div>
+            <div>
+              <h3>POSKAMLING</h3>
+              <p>Fitur masih dikembangkan. Monitoring pos keamanan lingkungan.</p>
+            </div>
+          </div>
+          <!-- POSYANDU (coming) -->
+          <div class="module-card coming" onclick="showComingSoon('Posyandu','Modul Posyandu sedang dalam tahap pengembangan. Akan segera hadir untuk membantu pemantauan kesehatan masyarakat.')">
+            <span class="module-card-badge badge-dev">Segera Hadir</span>
+            <div class="module-card-icon" style="background:rgba(124,58,237,.1);color:#7c3aed">
+              <i class="bi bi-heart-pulse-fill"></i>
+            </div>
+            <div>
+              <h3>Posyandu</h3>
+              <p>Fitur masih dikembangkan. Akan hadir untuk pemantauan kesehatan masyarakat.</p>
+            </div>
+          </div>
+          <!-- DATA SATLINMAS (coming) -->
+          <div class="module-card coming" onclick="showComingSoon('Data Satlinmas','Modul Data Satlinmas sedang dalam tahap pengembangan. Akan segera hadir untuk pengelolaan data anggota Satlinmas.')">
+            <span class="module-card-badge badge-dev">Segera Hadir</span>
+            <div class="module-card-icon" style="background:rgba(220,38,38,.1);color:var(--linmas-red)">
+              <i class="bi bi-people-fill"></i>
+            </div>
+            <div>
+              <h3>Data Satlinmas</h3>
+              <p>Fitur masih dikembangkan. Pengelolaan data anggota dan keanggotaan Satlinmas.</p>
+            </div>
+          </div>
+          <!-- KEBENCANAAN (coming) -->
+          <div class="module-card coming" onclick="showComingSoon('Kebencanaan','Modul Kebencanaan sedang dalam tahap pengembangan. Akan segera hadir untuk manajemen data dan laporan kebencanaan.')">
+            <span class="module-card-badge badge-dev">Segera Hadir</span>
+            <div class="module-card-icon" style="background:rgba(217,119,6,.12);color:var(--linmas-gold)">
+              <i class="bi bi-cloud-lightning-rain-fill"></i>
+            </div>
+            <div>
+              <h3>Kebencanaan</h3>
+              <p>Fitur masih dikembangkan. Manajemen data dan laporan bencana daerah.</p>
+            </div>
+          </div>
+          <!-- PERSURATAN (coming) -->
+          <div class="module-card coming" onclick="showComingSoon('Persuratan','Modul Persuratan sedang dalam tahap pengembangan. Akan segera hadir untuk manajemen surat menyurat Bidang Linmas.')">
+            <span class="module-card-badge badge-dev">Segera Hadir</span>
+            <div class="module-card-icon" style="background:rgba(59,130,246,.1);color:#3b82f6">
+              <i class="bi bi-envelope-fill"></i>
+            </div>
+            <div>
+              <h3>Persuratan</h3>
+              <p>Fitur masih dikembangkan. Manajemen surat masuk, keluar & disposisi Linmas.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- INFO SISTEM -->
+        <div class="dash-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h3><i class="bi bi-info-circle-fill" style="color:var(--primary)"></i> Info Sistem</h3>
+            </div>
+            <div class="panel-body">
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem"><span style="color:var(--text-muted)">Status Sistem</span><span style="color:var(--success);font-weight:700"><i class="bi bi-circle-fill" style="font-size:.5rem"></i> Online</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem"><span style="color:var(--text-muted)">Backend</span><span style="font-weight:600">Vercel API Route</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem"><span style="color:var(--text-muted)">Database</span><span style="font-weight:600">Google Sheets</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem"><span style="color:var(--text-muted)">Storage</span><span style="font-weight:600">Google Drive</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem"><span style="color:var(--text-muted)">Login sebagai</span><span style="font-weight:600" id="info-user">-</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem"><span style="color:var(--text-muted)">Tanggal</span><span style="font-weight:600" id="info-date">-</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">
+              <h3><i class="bi bi-lightning-charge-fill" style="color:var(--accent)"></i> Aksi Cepat</h3>
+            </div>
+            <div class="panel-body">
+              <div class="quick-actions">
+                <button class="qa-btn" onclick="window.location.href='/pedestrian/'"><i class="bi bi-person-walking" style="color:var(--linmas-teal)"></i><span>Buka PEDESTRIAN</span></button>
+                <button class="qa-btn" onclick="showComingSoon('Poskamling','Modul Poskamling saat ini sedang dalam persiapan.')"><i class="bi bi-shield-fill-check" style="color:var(--linmas-green)"></i><span>Buka Poskamling</span></button>
+                <button class="qa-btn" onclick="showComingSoon('Posyandu','Fitur Posyandu masih dalam pengembangan.')"><i class="bi bi-heart-pulse-fill" style="color:#7c3aed"></i><span>Posyandu</span></button>
+                <button class="qa-btn" onclick="showComingSoon('Kebencanaan','Fitur Kebencanaan masih dalam pengembangan.')"><i class="bi bi-cloud-lightning-rain-fill" style="color:var(--linmas-gold)"></i><span>Kebencanaan</span></button>
+                <button class="qa-btn" onclick="showComingSoon('Persuratan','Fitur Persuratan masih dalam pengembangan.')"><i class="bi bi-envelope-fill" style="color:#3b82f6"></i><span>Persuratan</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Placeholder pages agar navigateTo tidak error -->
+      <div id="page-agenda" class="view"></div>
+      <div id="page-undangan" class="view"></div>
+      <div id="page-surat-masuk" class="view"></div>
+      <div id="page-surat-keluar" class="view"></div>
+      <div id="page-disposisi" class="view"></div>
+      <div id="page-arsip" class="view"></div>
+      <div id="page-peta" class="view"></div>
+      <div id="page-panduan" class="view"></div>
+      <div id="page-pengaturan" class="view"></div>
+
+    </main>
+  </div>
+
+  <!-- EDIT MODAL (dibutuhkan oleh app.js) -->
+  <div id="edit-modal" class="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+    <div class="card" style="width:100%;max-width:500px;max-height:90vh;overflow-y:auto;position:relative;">
+      <button onclick="closeEditModal()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-muted);"><i class="bi bi-x"></i></button>
+      <h3 style="margin-bottom:16px;font-size:1.2rem;border-bottom:2px solid var(--primary-lt);padding-bottom:8px;" id="edit-modal-title">Edit Data</h3>
+      <div id="edit-form-container"></div>
+      <div class="form-group" style="margin-top:16px;background:var(--body-bg);padding:12px;border-radius:8px;border:1px dashed var(--border);">
+        <label class="form-label">Ganti Lampiran File? (Opsional)</label>
+        <div class="file-drop" id="edit-drop">
+          <i class="bi bi-cloud-arrow-up"></i>
+          <p style="font-size:0.75rem">Biarkan kosong jika tidak ingin mengubah file saat ini.</p>
+          <input type="file" id="edit-file" onchange="handleFileSelect('edit-file', 'edit-file-info')">
+          <div class="drop-name" id="edit-file-info"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:24px;justify-content:flex-end;">
+        <button class="btn-secondary-custom" onclick="closeEditModal()">Batal</button>
+        <button class="btn-primary-custom" id="btn-save-edit" onclick="submitEditData()"><i class="bi bi-save"></i> Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/app/app.js"></script>
+
+  <script>
+    /* ══════════════════════════════════════════════════════════
+       PORTAL LINMAS — EXTENSION SCRIPT
+       Ditambahkan setelah app.js agar fungsi dasar tersedia
+    ══════════════════════════════════════════════════════════ */
+
+    /* ── showComingSoon ── */
+    function showComingSoon(title, desc) {
+      document.getElementById('coming-title').textContent = title + ' — Segera Hadir';
+      document.getElementById('coming-desc').textContent = desc + '\n\nFitur ini masih dikembangkan kemudian.';
+      document.getElementById('coming-modal').classList.add('open');
+    }
+
+    /* ── Highlight active navbar item ── */
+    function setNavActive(id) {
+      document.querySelectorAll('.nav-menu-item').forEach(function(el) {
+        el.classList.remove('active');
+      });
+      var el = document.getElementById('nav-item-' + id);
+      if (el) el.classList.add('active');
+    }
+
+    /* ── Patch navigateTo to update nav active state ── */
+    var _origNavigateTo = window.navigateTo;
+    window.navigateTo = function(page) {
+      setNavActive(page);
+      if (typeof _origNavigateTo === 'function') _origNavigateTo(page);
+    };
+
+    /* ── Load Linmas dashboard stats ── */
+    function loadLinmasDashboard() {
+      /* Reset */
+      ['stat-patroli','stat-poskamling','stat-lapkamling','stat-anggota',
+       'hero-patroli','hero-poskamling','hero-satlinmas'].forEach(function(id){
+        var el = document.getElementById(id);
+        if(el) el.textContent = '…';
+      });
+
+      /* Tanggal di hero */
+      var now = new Date();
+      var dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+      var months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+      var dateStr = dayNames[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+      var heroDate = document.getElementById('hero-date');
+      if(heroDate) heroDate.textContent = dateStr;
+
+      /* Fetch Pedestrian dashboard (optional — jika apiGet tersedia) */
+      if (typeof apiGet === 'function') {
+        apiGet('getDashboard').then(function(d) {
+          if (!d) return;
+          /* Pedestrian biasanya ada field rekap/patroli */
+          var patrol = d.totalRekap || d.totalPatroli || d.total || '—';
+          var slm = d.totalSatlinmas || d.anggota || '—';
+          ['stat-patroli','hero-patroli'].forEach(function(id){
+            var el = document.getElementById(id); if(el) el.textContent = patrol;
+          });
+          ['stat-anggota','hero-satlinmas'].forEach(function(id){
+            var el = document.getElementById(id); if(el) el.textContent = slm;
+          });
+        }).catch(function(){
+          ['stat-patroli','hero-patroli','stat-anggota','hero-satlinmas'].forEach(function(id){
+            var el = document.getElementById(id); if(el) el.textContent = '—';
+          });
+        });
+      } else {
+        ['stat-patroli','hero-patroli','stat-anggota','hero-satlinmas'].forEach(function(id){
+          var el = document.getElementById(id); if(el) el.textContent = '—';
+        });
+      }
+
+      /* Stub for Poskamling — will be real when modules are unified */
+      ['stat-poskamling','hero-poskamling','stat-lapkamling'].forEach(function(id){
+        var el = document.getElementById(id); if(el) el.textContent = '—';
+      });
+    }
+
+    /* ── Override loadDashboard to call linmas version ── */
+    var _origLoadDashboard = window.loadDashboard;
+    window.loadDashboard = function() {
+      /* Call original (for SENAPATI view) */
+      if (typeof _origLoadDashboard === 'function') {
+        try { _origLoadDashboard(); } catch(e) {}
+      }
+      loadLinmasDashboard();
+    };
+
+    /* ── On page ready ── */
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        if (document.getElementById('page-dashboard') &&
+            document.getElementById('page-dashboard').classList.contains('active')) {
+          loadLinmasDashboard();
+        }
+      }, 800);
+    });
+  </script>
+
+</body>
+</html>

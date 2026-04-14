@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" id="mvp">
+  <title>PEDESTRIAN ― Sistem Monitoring Program Pedestrian</title>
+  <!-- FAVICON & PWA -->
+  <link rel="icon" href="/pedestrian/assets/icon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="/pedestrian/assets/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="/pedestrian/assets/icon-192.png">
+  <link rel="shortcut icon" href="/pedestrian/assets/icon-32.png">
+  <!-- CSS -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <!-- CSS -->
+  <link rel="stylesheet" href="/pedestrian/css/style.css">
+</head>
+
+<body>
+  <!-- JS — urutan penting -->
+  <script src="/pedestrian/js/modules/ui/darkmode.js"></script>
+  <script src="/pedestrian/js/env.js"></script>
+  <script src="/pedestrian/js/config.js"></script>
+  <script src="/pedestrian/js/api.js?v=20260406c"></script>
+  <script src="/pedestrian/js/main.js?v=20260406c"></script>
+
+  <!-- ═══════════════════════════════════════════════════
+     PEDESTRIAN GLOBAL CACHE SYSTEM
+     Diletakkan setelah api.js agar apiGet tersedia
+     ═══════════════════════════════════════════════════ -->
+  <script>
+    (function () {
+      var _gc = {}, TTL = 5 * 60 * 1000; /* TTL 5 menit */
+
+      window._gcGet = function (k) {
+        var e = _gc[k];
+        if (!e) return null;
+        if (Date.now() - e.ts > TTL) { delete _gc[k]; return null; }
+        return e.data;
+      };
+      window._gcSet = function (k, d) { _gc[k] = { data: d, ts: Date.now() }; };
+      window._gcDel = function (k) { delete _gc[k]; };
+      window._gcClear = function () { _gc = {}; };
+
+      /* Refresh satu key di background — fire & forget */
+      window._gcRefresh = function (k) {
+        var jobs = {
+          dashboard: function () { return apiGet('getDashboard'); },
+          rekap: function () { return apiGet('getRekap'); },
+          satlinmas: function () { return apiGet('getSatlinmas'); },
+          layerPeta: function () { return apiGet('getLayerPeta'); },
+          fotoMarker: function () { return apiGet('getDetailFotoMarkers'); }
+        };
+        if (jobs[k]) jobs[k]().then(function (d) { window._gcSet(k, d); }).catch(function () { });
+      };
+
+      /* Prefetch semua data secara waterfall setelah halaman dimuat */
+      window._prefetchAll = function () {
+        var delay = 2000; /* mulai 2 detik setelah load */
+        var jobs = [
+          { key: 'dashboard', fn: function () { return apiGet('getDashboard'); } },
+          { key: 'rekap', fn: function () { return apiGet('getRekap'); } },
+          { key: 'satlinmas', fn: function () { return apiGet('getSatlinmas'); } },
+          { key: 'layerPeta', fn: function () { return apiGet('getLayerPeta'); } },
+          { key: 'fotoMarker', fn: function () { return apiGet('getDetailFotoMarkers'); } }
+        ];
+        jobs.forEach(function (job) {
+          setTimeout(function () {
+            if (window._gcGet(job.key)) return; /* sudah ada, skip */
+            job.fn().then(function (d) { window._gcSet(job.key, d); }).catch(function () { });
+          }, delay);
+          delay += 1200; /* jeda 1.2 detik antar request */
+        });
+      };
+    })();
+  </script>
+
+  <!-- LOADING OVERLAY -->
+  <div id="lov">
+    <div class="spw">
+      <div class="spo"></div>
+      <div class="spi"></div>
+    </div><span id="lmsg">Memuat...</span>
+  </div>
+  <div id="tco"></div>
+
+  <!-- GALLERY -->
+  <div id="gov">
+    <button id="gcl" onclick="galClose()">&times;</button>
+    <div id="gcnt">1 / 1</div>
+    <div id="gloaderOverlay"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>
+    <div class="gmw">
+      <button class="gnav" id="gpv" onclick="galNav(-1)"><i class="fas fa-chevron-left"></i></button>
+      <img id="gimg" src="" alt="" onerror="galImgErr(this)" onload="galImgLoad(this)">
+      <button class="gnav" id="gnx" onclick="galNav(1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div id="gths"></div>
+    <div id="gdrvlink"><a href="#" id="gdrvhref" target="_blank" rel="noopener"><i class="fab fa-google-drive"></i> Buka
+        di Google Drive</a></div>
+  </div>
+
+  <!-- MODALS -->
+  <div class="mov" id="medit">
+    <div class="mbox">
+      <div class="mhd">
+        <h5><i class="fas fa-pen-to-square" style="color:var(--blue)"></i>Edit Laporan</h5><button class="bx"
+          onclick="cm('medit')">&times;</button>
+      </div>
+      <div class="mbd" id="medit-body"></div>
+      <div class="mft"><button class="bg2" onclick="cm('medit')">Batal</button><button class="bp"
+          onclick="submitEdit()"><i class="fas fa-save"></i> Simpan</button></div>
+    </div>
+  </div>
+
+  <div class="mov" id="mconf">
+    <div class="mbox sm">
+      <div class="mhd">
+        <h5 style="color:var(--red)"><i class="fas fa-triangle-exclamation"></i>Konfirmasi Hapus</h5><button class="bx"
+          onclick="cm('mconf')">&times;</button>
+      </div>
+      <div class="mbd">
+        <p style="font-size:.8rem;color:var(--mid);line-height:1.6" id="mconf-msg">Hapus data ini?</p>
+      </div>
+      <div class="mft"><button class="bg2" onclick="cm('mconf')">Batal</button><button class="bd" id="mbtnhps"><i
+            class="fas fa-trash"></i> Hapus</button></div>
+    </div>
+  </div>
+
+  <div class="mov" id="mslm">
+    <div class="mbox sm">
+      <div class="mhd">
+        <h5 id="mslm-title"><i class="fas fa-user-plus" style="color:var(--green)"></i>Input Anggota</h5><button
+          class="bx" onclick="cm('mslm')">&times;</button>
+      </div>
+      <div class="mbd" id="mslm-body"></div>
+      <div class="mft"><button class="bg2" onclick="cm('mslm')">Batal</button><button class="bp"
+          onclick="submitSlm()"><i class="fas fa-save"></i> Simpan</button></div>
+    </div>
+  </div>
+
+  <!-- MODAL PDF — layout vertikal: form atas, preview bawah -->
+  <div class="mov" id="mpdf">
+    <div class="mbox xl" style="max-width:860px;width:96vw">
+      <div class="mhd">
+        <h5><i class="fas fa-file-alt" style="color:var(--red)"></i>Cetak Laporan Monitoring Pedestrian</h5>
+        <button class="bx" onclick="cm('mpdf')">&times;</button>
+      </div>
+
+      <div class="mbd"
+        style="padding:14px 16px;display:flex;flex-direction:column;gap:12px;max-height:82vh;overflow-y:auto">
+
+        <!-- ═══ BAGIAN FORM (ATAS) ══════════════════════════════════ -->
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px">
+          <p
+            style="font-size:.67rem;font-weight:800;color:var(--mid);margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em">
+            <i class="fas fa-pen-to-square" style="color:var(--blue)"></i> Isi Laporan
+          </p>
+
+
+
+          <!-- baris 1: hari + tanggal -->
+          <div class="frow">
+            <div class="fcol"><label class="flbl">Hari</label><input class="fctl" id="pdf-hari"></div>
+            <div class="fcol"><label class="flbl">Tanggal Kegiatan</label><input class="fctl" id="pdf-tanggal"></div>
+          </div>
+
+          <!-- baris 2: tujuan + no spt -->
+          <div class="frow">
+            <div class="fcol" style="flex:2"><label class="flbl">Tujuan</label><input class="fctl" id="pdf-tujuan">
+            </div>
+            <div class="fcol" style="flex:2"><label class="flbl">Nomor SPT <span
+                  style="font-size:.55rem;color:var(--muted)">(default dari Pengaturan)</span></label><input
+                class="fctl" id="pdf-nospt" placeholder="300.1.4 / ARH / 8 / 405.14 / 2026"></div>
+          </div>
+
+          <!-- baris 3: lokasi + anggota + pukul -->
+          <div class="frow">
+            <div class="fcol" style="flex:2"><label class="flbl">Lokasi</label><input class="fctl" id="pdf-lokasi">
+            </div>
+            <div class="fcol" style="flex:2"><label class="flbl">Anggota</label><input class="fctl" id="pdf-anggota">
+            </div>
+            <div class="fcol" style="flex:1"><label class="flbl">Pukul</label><input class="fctl" id="pdf-pukul"></div>
+          </div>
+
+          <!-- baris 4: identitas + uraian (2 kolom) -->
+          <div class="frow" style="align-items:flex-start">
+            <div class="fcol">
+              <label class="flbl" style="color:var(--red)"><i class="fas fa-triangle-exclamation"></i> Identitas
+                Pelanggar</label>
+              <textarea class="fctl" id="pdf-identitas" rows="4"
+                placeholder="Kosongkan jika NIHIL&#10;Contoh:&#10;Nama   : Budi Santoso&#10;Alamat : Jl. Merdeka No.5"></textarea>
+              <div style="font-size:.6rem;color:var(--muted);margin-top:3px">Jika diisi, baris Identitas otomatis muncul
+                di tabel.</div>
+            </div>
+            <div class="fcol">
+              <label class="flbl">Uraian Laporan</label>
+              <textarea class="fctl" id="pdf-uraian" rows="4"
+                placeholder="Otomatis terisi dari Keterangan laporan. Bisa diedit sebelum cetak..."></textarea>
+              <div style="font-size:.6rem;color:var(--muted);margin-top:3px"><i class="fas fa-info-circle"></i> Otomatis
+                terisi dari kolom <strong>Keterangan</strong>.</div>
+            </div>
+          </div>
+
+          <!-- baris 5: tanggal surat + TTD toggle -->
+          <div class="frow" style="align-items:flex-start;gap:10px">
+            <div class="fcol">
+              <label class="flbl">Tanggal Surat (di bawah TTD)</label>
+              <input class="fctl" id="pdf-tglsurat" placeholder="Contoh: 7 Maret 2026">
+            </div>
+            <div class="fcol" style="padding-top:18px">
+              <button class="bg2" style="width:100%;font-size:.65rem" onclick="togglePdfTtd()">
+                <i class="fas fa-pen-nib"></i> <span id="pdf-ttd-lbl">Ubah Data Pejabat TTD ▸</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- TTD detail (tersembunyi) -->
+          <div id="pdf-ttd-box" class="pdf-ttd-box">
+            <div class="frow">
+              <div class="fcol"><label class="flbl">Jabatan</label><input class="fctl" id="pdf-jabatan"
+                  value="Kepala Bidang SDA dan Linmas"></div>
+              <div class="fcol"><label class="flbl">Nama</label><input class="fctl" id="pdf-namatd"
+                  value="Erry Setiyoso Birowo, SP"></div>
+            </div>
+            <div class="frow">
+              <div class="fcol"><label class="flbl">Pangkat</label><input class="fctl" id="pdf-pangkat" value="Pembina">
+              </div>
+              <div class="fcol"><label class="flbl">NIP</label><input class="fctl" id="pdf-nip"
+                  value="19751029 200212 1 008"></div>
+            </div>
+            <div style="font-size:.6rem;color:var(--muted);margin-top:6px"><i class="fas fa-info-circle"></i> Default
+              dari Pengaturan. Ubah di sini jika perlu override untuk cetakan ini.</div>
+          </div>
+
+          <!-- tombol refresh preview -->
+          <button id="btn-ref-pdf" class="bp" style="width:100%;margin-top:4px" onclick="refreshPdfPreview()">
+            <i class="fas fa-sync"></i> Perbarui Preview
+          </button>
+          <div style="text-align:center;font-size:.6rem;color:var(--blue);margin-top:6px">
+            <i class="fas fa-bolt"></i> Preview re-generates automatically as you type
+          </div>
+        </div>
+
+
+        <!-- ═══ BAGIAN PREVIEW (BAWAH) ════════════════════════════ -->
+        <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#e8e8e8;flex-shrink:0">
+          <div style="background:var(--card);border-bottom:1px solid var(--border);padding:8px 12px;
+          display:flex;align-items:center;justify-content:space-between">
+            <span
+              style="font-size:.67rem;font-weight:800;color:var(--mid);text-transform:uppercase;letter-spacing:.06em">
+              <i class="fas fa-eye" style="color:var(--blue)"></i> Preview Dokumen
+            </span>
+            <button class="bp" style="font-size:.65rem;padding:5px 12px" onclick="doPrint('pdfframe')">
+              <i class="fas fa-print"></i> Cetak / PDF
+            </button>
+          </div>
+          <iframe id="pdfframe" style="width:100%;height:520px;border:none;display:block"></iframe>
+        </div>
+
+      </div><!-- /mbd -->
+
+      <div class="mft">
+        <button class="bg2" onclick="cm('mpdf')">Tutup</button>
+        <button class="bp" onclick="doPrint('pdfframe')"><i class="fas fa-print"></i> Cetak / PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Kolektif -->
+  <div class="mov" id="mkolektif">
+    <div class="mbox xl">
+      <div class="mhd">
+        <h5><i class="fas fa-print" style="color:var(--purple)"></i>Cetak Laporan Kolektif</h5><button class="bx"
+          onclick="cm('mkolektif')">&times;</button>
+      </div>
+      <div class="mbd" style="padding:0">
+        <div style="display:grid;grid-template-columns:260px 1fr;height:74vh">
+          <div
+            style="padding:14px;border-right:1px solid var(--border);overflow-y:auto;background:var(--bg);display:flex;flex-direction:column;gap:10px">
+            <p style="font-size:.67rem;font-weight:800;color:var(--mid);text-transform:uppercase;letter-spacing:.06em">
+              Filter Rentang Tanggal</p>
+            <div class="fgrp"><label class="flbl">Dari Tanggal</label><input class="fctl" type="date" id="kol-from"
+                onchange="_kolPreviewDebounced()"></div>
+            <div class="fgrp"><label class="flbl">Sampai Tanggal</label><input class="fctl" type="date" id="kol-to"
+                onchange="_kolPreviewDebounced()"></div>
+            <button class="bp" style="width:100%" onclick="previewKolektif()"><i class="fas fa-eye"></i> Perbarui
+              Preview</button>
+            <div id="kol-info"
+              style="font-size:.7rem;color:var(--mid);background:var(--card);border:1px solid var(--border);border-radius:7px;padding:9px;min-height:40px">
+            </div>
+            <div style="margin-top:auto">
+              <p style="font-size:.63rem;color:var(--muted);line-height:1.6"><i class="fas fa-info-circle"
+                  style="color:var(--blue)"></i> PDF landscape A4 kop surat resmi.</p>
+            </div>
+          </div>
+          <div style="background:#e8e8e8;position:relative">
+            <div id="kol-empty"
+              style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:rgba(0,0,0,.3)">
+              <i class="fas fa-file-lines" style="font-size:2.4rem;opacity:.18"></i>
+              <p style="font-size:.76rem">Pilih rentang tanggal lalu klik Perbarui Preview</p>
+            </div>
+            <iframe id="kolframe" style="width:100%;height:100%;border:none;display:none"></iframe>
+          </div>
+        </div>
+      </div>
+      <div class="mft"><button class="bg2" onclick="cm('mkolektif')">Tutup</button><button class="bp" id="kol-printbtn"
+          onclick="doPrint('kolframe')" disabled style="opacity:.5"><i class="fas fa-print"></i> Cetak / PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Edit Layer Peta -->
+  <div class="mov" id="mlayer">
+    <div class="mbox xl" style="max-width:720px">
+      <div class="mhd">
+        <h5><i class="fas fa-layer-group" style="color:var(--teal)"></i> Edit Layer Peta Pedestrian</h5>
+        <button class="bx" onclick="cm('mlayer')">&times;</button>
+      </div>
+      <div class="mbd" style="padding:0">
+        <div style="display:grid;grid-template-columns:1fr 1fr;height:68vh;min-height:400px">
+          <div style="padding:12px;border-right:1px solid var(--border);overflow-y:auto;background:var(--bg)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+              <p
+                style="font-size:.67rem;font-weight:800;color:var(--mid);text-transform:uppercase;letter-spacing:.06em">
+                Daftar Layer</p>
+              <button class="bp" style="font-size:.63rem;padding:5px 10px" onclick="openLayerForm(null)">
+                <i class="fas fa-plus"></i> Tambah
+              </button>
+            </div>
+            <div id="layer-list-body">
+              <div class="empty"><i class="fas fa-layer-group"></i>
+                <p>Memuat...</p>
+              </div>
+            </div>
+          </div>
+          <div style="padding:12px;overflow-y:auto">
+            <div id="layer-form-wrap">
+              <div class="empty" style="padding:40px 10px">
+                <i class="fas fa-hand-pointer" style="font-size:1.5rem;opacity:.14;display:block;margin-bottom:8px"></i>
+                <p style="font-size:.72rem">Pilih layer di kiri untuk diedit,<br>atau klik Tambah untuk layer baru.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mft">
+        <button class="bg2" onclick="cm('mlayer')">Tutup</button>
+        <button class="bp" onclick="refreshLeaflet()">
+          <i class="fas fa-sync"></i> Refresh Peta
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Konfirm Hapus Layer -->
+  <div class="mov" id="mconfLayer" style="z-index:100000">
+    <div class="mbox sm">
+      <div class="mhd">
+        <h5 style="color:var(--red)"><i class="fas fa-triangle-exclamation"></i> Hapus Layer</h5><button class="bx"
+          onclick="cm('mconfLayer')">&times;</button>
+      </div>
+      <div class="mbd">
+        <p style="font-size:.8rem;color:var(--mid);line-height:1.6">Hapus layer ini dari peta? Data tidak dapat
+          dikembalikan.</p>
+      </div>
+      <div class="mft"><button class="bg2" onclick="cm('mconfLayer')">Batal</button><button class="bd"
+          id="mbtnhpsLayer"><i class="fas fa-trash"></i> Hapus</button></div>
+    </div>
+  </div>
+
+  <div id="mbb" onclick="sbClose()"></div>
+
+  <div id="app-wrap">
+    <!-- MAIN APP — langsung tampil tanpa login -->
+    <div id="app" class="on">
+      <nav class="sb" id="sidebar">
+        <div class="sbbr">
+          <img src="/pedestrian/assets/icon-full.png" alt="">
+          <div class="sipedas-glow-sb sb-sipedas">PEDESTRIAN</div>
+          <div class="sb-subtitle">Dashboard Monitoring<br>Sistem Monitoring Program Pedestrian</div>
+        </div>
+        <div class="sbnv">
+          <span class="nslbl">Menu Utama</span>
+          <button class="nb on" id="nav-db" onclick="loadDashboard();sbClose()"><i class="fas fa-gauge-high"></i>
+            Dashboard</button>
+          <button class="nb" id="nav-rk" onclick="loadRekap();sbClose()"><i class="fas fa-table-list"></i> Rekap
+            Laporan</button>
+          <button class="nb" id="nav-in" onclick="loadInput();sbClose()"><i class="fas fa-plus-circle"></i> Input
+            Laporan</button>
+          <span class="nslbl">Data &amp; Peta</span>
+          <button class="nb" id="nav-sl" onclick="loadSatlinmas();sbClose()"><i class="fas fa-users"></i> Data
+            Satlinmas</button>
+          <button class="nb nb-peta" id="nav-pt" onclick="loadPeta();sbClose()"><i class="fas fa-map-location-dot"></i>
+            Peta Pedestrian</button>
+          <span class="nslbl sb-ptk-section">Panduan</span>
+          <button class="nb nb-ptk sb-ptk-section" id="nav-ptk" onclick="loadPetunjuk();sbClose()"><i
+              class="fas fa-book-open"></i> Petunjuk Teknis</button>
+          <button class="nb" id="nav-set" onclick="loadSettings();sbClose()"><i class="fas fa-gear"></i>
+            Pengaturan</button>
+        </div>
+        <div class="sbft">
+          <button class="lgout" onclick="kembaliKePortal()"><i class="fas fa-arrow-left"></i> Kembali ke Portal</button>
+          <button id="sb-col-btn" onclick="toggleSbCollapse()"><i class="fas fa-chevron-left"
+              id="sb-col-ico"></i></button>
+        </div>
+      </nav>
+      <div class="main">
+        <div class="topb">
+          <div class="tbl">
+            <button class="hmb" onclick="sbToggle()"><i class="fas fa-bars"></i></button>
+            <div>
+              <div class="pgtl" id="pgtl">Dashboard</div>
+              <div class="pgsb" id="pgsb">Statistik &amp; grafik data patroli</div>
+            </div>
+          </div>
+          <div class="tbr">
+            <button id="refresh-btn" onclick="doRefreshPage()"><i class="fas fa-rotate-right"></i></button>
+            <button id="dm-btn" onclick="toggleDarkMode()" title="Dark Mode"><i class="fas fa-moon"></i></button>
+          </div>
+        </div>
+        <div class="pa" id="ct"></div>
+        <nav class="bnav" id="bnav">
+          <button class="bni on" id="bni-db" onclick="loadDashboard()"><i
+              class="fas fa-gauge-high"></i>Dashboard</button>
+          <button class="bni" id="bni-rk" onclick="loadRekap()"><i class="fas fa-table-list"></i>Rekap</button>
+          <button class="bni" id="bni-in" onclick="loadInput()"><i class="fas fa-plus-circle"></i>Input</button>
+          <button class="bni" id="bni-sl" onclick="loadSatlinmas()"><i class="fas fa-users"></i>Anggota</button>
+          <button class="bni bni-peta-ico" id="bni-pt" onclick="loadPeta()"><i
+              class="fas fa-map-location-dot"></i>Peta</button>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* Init langsung tanpa login — sesi dikelola portal induk */
+    window._initApp = function () {
+      if (window.applyViewMode) applyViewMode();
+      if (window.initDarkMode) initDarkMode();
+      loadDashboard();
+      if (window._prefetchAll) window._prefetchAll();
+    };
+  </script>
+
+  </script>
+
+</body>
+
+</html>

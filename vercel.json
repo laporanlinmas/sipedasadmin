@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "outputDirectory": ".next",
+  "rewrites": [
+    { "source": "/", "destination": "/app" },
+    { "source": "/pedestrian", "destination": "/pedestrian/" },
+    { "source": "/poskamling", "destination": "/poskamling/" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+      ]
+    }
+  ],
+  "functions": {
+    "pages/api/[action].js": {
+      "maxDuration": 60,
+      "memory": 512
+    }
+  }
+}
