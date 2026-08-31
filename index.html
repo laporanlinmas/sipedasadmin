@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" id="mvp">
+  <title>SIPEDAS - Sistem Informasi Pedestrian dan Aksi Satgas Linmas</title>
+  
+  <!-- FAVICON & PWA -->
+  <link rel="icon" href="/assets/icon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="/assets/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/icon-192.png">
+  <link rel="shortcut icon" href="/assets/icon-32.png">
+  
+  <!-- PWA MANIFEST -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1e293b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SI-PEDAS">
+  <meta name="application-name" content="SI-PEDAS">
+  
+  <!-- FONTS & ICON PACKS (Genesis Theme Typography) -->
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- LEAFLET & LEAFLET DRAW PRELOADS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+</head>
+
+<body>
+  <div id="root"></div>
+  
+  <script type="module" src="/src/main.tsx"></script>
+
+  <!-- PWA SERVICE WORKER REGISTRATION -->
+  <script>
+    (function () {
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function (reg) { console.log('[SW] Terdaftar:', reg.scope); })
+            .catch(function (err) { console.warn('[SW] Gagal:', err); });
+        });
+      }
+    })();
+  </script>
+</body>
+
+</html>
