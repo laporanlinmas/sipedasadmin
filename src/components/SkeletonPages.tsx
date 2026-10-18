@@ -248,41 +248,13 @@ export const SatlinmasSkeleton: React.FC = () => (
   </div>
 );
 
-/* ─── 4. INPUT LAPORAN ──────────────────────────────── */
+/* ─── 4. INPUT LAPORAN ─────────────────────────────── */
 export const InputSkeleton: React.FC = () => (
-  <div className="flex flex-col gap-4">
-    {/* Tab bar */}
-    <div className="flex gap-2">
-      <Sk className="h-9 w-28 rounded-lg" />
-      <Sk className="h-9 w-28 rounded-lg" />
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {/* Left: photo area */}
-      <div className="flex flex-col gap-3">
-        <div className="bg-card border border-[var(--border)] rounded-xl p-3 flex flex-col gap-2">
-          <Sk className="h-4 w-28" />
-          <Sk className="h-44 w-full rounded-lg" />
-          <div className="flex gap-2 mt-1">
-            <Sk className="h-8 flex-1 rounded-lg" />
-            <Sk className="h-8 flex-1 rounded-lg" />
-          </div>
-        </div>
-        <div className="bg-card border border-[var(--border)] rounded-xl p-3 flex gap-2">
-          {[...Array(4)].map((_, i) => <Sk key={i} className="h-16 flex-1 rounded-lg" />)}
-        </div>
-      </div>
-      {/* Right: form */}
-      <div className="bg-card border border-[var(--border)] rounded-xl p-4 flex flex-col gap-3">
-        <Sk className="h-4 w-28" />
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="flex flex-col gap-1.5">
-            <Sk className="h-3 w-24" />
-            <Sk className="h-9 w-full rounded-lg" />
-          </div>
-        ))}
-        <Sk className="h-10 w-full rounded-lg mt-2" />
-      </div>
-    </div>
+  /* Satu kotak besar yang mengisi area iframe. sengaja TIDAK memakai
+     blok-blok kecil seperti form, supaya transisi ke aplikasi di dalam
+     frame terasa mulus dan tidak terlihat "kotak-kotak". */
+  <div className="h-full min-h-[320px] w-full overflow-hidden rounded-xl border border-[var(--border)] bg-card">
+    <div className="skeleton h-full w-full rounded-xl" />
   </div>
 );
 
