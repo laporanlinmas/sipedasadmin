@@ -203,6 +203,16 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     if (!data) return;
 
+    const textColor = isDarkMode ? '#94a3b8' : '#64748b';
+    const gridColor = isDarkMode ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.05)';
+    Chart.defaults.color = textColor;
+    if (Chart.defaults.scales?.linear) {
+      Chart.defaults.scales.linear.grid.color = gridColor;
+    }
+    if (Chart.defaults.scale?.grid) {
+      Chart.defaults.scale.grid.color = gridColor;
+    }
+
     // 1. Calculate Laporan per Hari (Last 7 Days) from allData
     const BLN: Record<string, number> = {
       januari: 1, februari: 2, maret: 3, maret_old: 3, april: 4, mei: 5, juni: 6,

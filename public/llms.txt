@@ -1,0 +1,7 @@
+# SI-PEDAS
+
+Sistem Pelaporan Digital Satgas Linmas Kabupaten Ponorogo.
+
+## Website
+
+- [SI-PEDAS](https://sipedasadmin.vercel.app/): Portal resmi aplikasi SIPEDAS.

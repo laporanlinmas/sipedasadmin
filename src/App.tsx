@@ -1,13 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { Chart } from 'chart.js/auto';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { UserSession } from './types';
 import { apiGet, apiPost } from './services/api';
 import { idbGet, idbSet, idbDel, idbClear, idbGetTs } from './services/idb-cache';
 import { Login } from './pages/Login';
-import { AppLayout } from './components/AppLayout';
 import { ConfirmModal } from './components/common/ConfirmModal';
 import { AlertModal } from './components/common/AlertModal';
 import { LogOut } from 'lucide-react';
+
+const AppLayout = lazy(() => import('./components/AppLayout'));
 
 // ==========================================
 // 1. THEME CONTEXT
@@ -47,18 +47,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       docEl.classList.remove('dark-pre');
     }
 
-    if (Chart) {
-      const textColor = dark ? '#94a3b8' : '#64748b';
-      const gridColor = dark ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.05)';
-      Chart.defaults.color = textColor;
-      if (Chart.defaults.scales && Chart.defaults.scales.linear) {
-        if (!Chart.defaults.scales.linear.grid) Chart.defaults.scales.linear.grid = {};
-        Chart.defaults.scales.linear.grid.color = gridColor;
-      }
-      if (Chart.defaults.scale && Chart.defaults.scale.grid) {
-        Chart.defaults.scale.grid.color = gridColor;
-      }
-    }
   };
 
   useEffect(() => {
@@ -747,7 +735,15 @@ const AppContent: React.FC = () => {
     return <Login />;
   }
 
-  return <AppLayout />;
+  return (
+    <Suspense fallback={(
+      <div className="flex min-h-screen items-center justify-center bg-bg" role="status" aria-label="Memuat aplikasi">
+        <div className="h-9 w-9 animate-spin-custom rounded-full border-[3px] border-border border-t-blue" />
+      </div>
+    )}>
+      <AppLayout />
+    </Suspense>
+  );
 };
 
 const AuthProviderWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {

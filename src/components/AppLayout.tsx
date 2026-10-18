@@ -246,14 +246,14 @@ export const AppLayout: React.FC = () => {
         >
           <Topbar onToggleMobileSidebar={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)} />
 
-          <div
+          <main
             className="w-full flex-1 overflow-y-auto overflow-x-hidden p-3 min-[769px]:overflow-x-auto max-md:landscape:overflow-x-auto md:p-4"
             id="ct"
           >
             <PageErrorBoundary>
               {renderActiveTab()}
             </PageErrorBoundary>
-          </div>
+          </main>
         </div>
       </div>
 

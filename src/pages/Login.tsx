@@ -134,7 +134,7 @@ export const Login: React.FC = () => {
   const isLocked = lockoutSec > 0;
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg p-5 transition-[background-color] duration-300 ease-[ease]">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-bg p-5 transition-[background-color] duration-300 ease-[ease]">
       {/* Grid background */}
       <span
         aria-hidden="true"
@@ -177,7 +177,7 @@ export const Login: React.FC = () => {
           <div className="relative z-10 mb-[28px] flex w-full items-center justify-between">
             <div className="relative z-[1] mb-0 flex items-start gap-[14px]">
               <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[14px] border-[1.5px] border-[rgba(255,255,255,.3)] bg-[rgba(255,255,255,.15)] p-1.5 backdrop-blur-[4px]">
-                <img src="/assets/icon-512.png" alt="SIPEDAS" className="h-9 w-9 object-contain" onError={e => (e.currentTarget.style.display = 'none')} />
+                <img src="/assets/icon-192.png" alt="SIPEDAS" width={36} height={36} className="h-9 w-9 object-contain" onError={e => (e.currentTarget.style.display = 'none')} />
               </div>
               <div>
                 <div className="text-[1.5rem] font-black uppercase leading-none tracking-[.12em] text-[#ffb020] [text-indent:.04em]">SIPEDAS</div>
@@ -300,8 +300,8 @@ export const Login: React.FC = () => {
                   disabled={isLocked}
                   className="absolute right-2.5 cursor-pointer border-none bg-transparent p-1 text-muted transition-colors duration-150 hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
                   onClick={() => setShowPassword(v => !v)}
-                  tabIndex={-1}
                   aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                  aria-pressed={showPassword}
                 >
                   {showPassword ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -330,7 +330,7 @@ export const Login: React.FC = () => {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-[.62rem] leading-[1.5] text-muted">&copy; 2026 Bidang SDA & Linmas Satpol PP Kabupaten Ponorogo</p>
+          <p className={`mt-6 text-center text-[.62rem] leading-[1.5] ${isDarkMode ? 'text-[#9ca3af]' : 'text-[#64748b]'}`}>&copy; 2026 Bidang SDA & Linmas Satpol PP Kabupaten Ponorogo</p>
         </div>
       </div>
 
@@ -338,7 +338,7 @@ export const Login: React.FC = () => {
         aria-hidden="true"
         className="pointer-events-none absolute -bottom-[15%] -left-[10%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle,rgba(255,210,63,.10)_0%,transparent_65%)]"
       />
-    </div>
+    </main>
   );
 };
 

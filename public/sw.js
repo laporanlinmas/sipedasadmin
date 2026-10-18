@@ -6,7 +6,7 @@ const STATIC_ASSETS = [
   '/manifest.json',
   '/assets/icon-32.png',
   '/assets/icon-192.png',
-  '/assets/icon-full.png'
+  '/assets/icon-512.png'
 ];
 
 /* Install: cache semua aset statis */
