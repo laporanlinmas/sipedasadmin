@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useAuth } from '../App';
+import { useAuth, useTheme } from '../App';
 import { InputSkeleton } from '../components/SkeletonPages';
 import { useFrameThemeSync, withThemeParam } from '../lib/frame-theme';
 import { Info } from 'lucide-react';
@@ -35,13 +35,23 @@ function resolveUrl(): string {
 
 const InputLaporanContent: React.FC = () => {
   const { isAdmin } = useAuth();
+  const { setDarkMode } = useTheme();
   const [url] = useState<string>(resolveUrl);
   /** true = aplikasi di dalam frame sudah melapor siap */
   const [frameReady, setFrameReady] = useState(false);
   const frameRef = useRef<HTMLIFrameElement>(null);
 
-  // Ikuti tema dashboard di dalam frame (lihat src/lib/frame-theme.ts).
-  const theme = useFrameThemeSync([frameRef]);
+  /*
+   * Ikuti tema dashboard di dalam frame (lihat src/lib/frame-theme.ts).
+   *
+   * `onThemeFromChild` mengaktifkan sinkron dua arah: saat pengguna menekan tombol
+   * light/dark DI DALAM aplikasi pelaporan, tema dashboard ikut berubah.
+   * Tanpa ini hanya satu arah — dashboard memaksa temanya ke frame, tetapi
+   * pilihan pengguna di dalam frame tidak berefek apa pun.
+   */
+  const theme = useFrameThemeSync([frameRef], {
+    onThemeFromChild: (next) => setDarkMode(next === 'dark'),
+  });
 
   // Reset status setiap kali iframe baru dimuat.
   useEffect(() => {
