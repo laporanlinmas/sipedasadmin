@@ -18,7 +18,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, setIsOpenMobile, collapsed, onToggleCollapse }) => {
-  const { activeTab, setActiveTab, rekapKategori, setRekapKategori } = useApp();
+  const { activeTab, setActiveTab } = useApp();
   const { isAdmin, session, logout } = useAuth();
   const isPhonePortrait = usePhonePortrait();
 
@@ -230,7 +230,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, setIsOpenMobile,
           {hasPermission('peta') && <NavBtn tab="pt" icon={<Map className="h-4 w-4" />} label="Peta Satgas" />}
           {hasPermission('cctv') && <NavBtn tab="cc" icon={<Video className="h-4 w-4" />} label="CCTV Pedestrian" />}
           {hasPermission('aduan') && <NavBtn tab="ad" icon={<MessageSquare className="h-4 w-4" />} label="Aduan" />}
-          {hasPermission('survei') && <NavBtn tab="sv" icon={<BarChart3 className="h-4 w-4" />} label="Survei Kepuasan" />}
+          {hasPermission('survei') && <NavBtn tab="sv" icon={<BarChart3 className="h-4 w-4" />} label="Rating Layanan" />}
 
           {hasPermission('pengaturan') && <NavBtn tab="set" icon={<Settings className="h-4 w-4" />} label="Pengaturan" />}
         </div>

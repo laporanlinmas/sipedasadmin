@@ -6,7 +6,6 @@ import { useApp, useAuth, useTheme } from '../App';
 import { apiGet, apiPost } from '../services/api';
 import {
   esc,
-  makeDriveThumbUrl,
   parseISODate,
   parseTglID,
   getMonthYearKey,

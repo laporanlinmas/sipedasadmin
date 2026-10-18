@@ -36,8 +36,15 @@ async function parseFetchJson(res: Response): Promise<any> {
     }
     return data;
   } catch (err) {
-    console.error('api JSON parse error:', err);
-    return { success: false, message: 'Respons bukan JSON (HTTP ' + res.status + ')' };
+    // Server mengembalikan HTML (bukan JSON) → hampir selalu karena endpoint
+    // backend tidak terjangkau, mis. hanya `vite preview` tanpa `vercel dev`.
+    const looksHtml = (text || '').trimStart().slice(0, 20).toLowerCase().startsWith('<');
+    const pesan = looksHtml
+      ? `Backend ${getApiProxyUrl()} tidak tersedia (server membalas HTML, bukan JSON). Jalankan dengan \`vercel dev\` atau deploy ke Vercel.`
+      : `Respons server tidak valid (HTTP ${res.status}): ${(err as Error)?.message || 'gagal parse JSON'}`;
+
+    console.error(`[API] ${pesan}`, { url: getApiProxyUrl(), status: res.status, error: err });
+    return { success: false, message: pesan };
   }
 }
 
@@ -58,8 +65,8 @@ export async function apiGet(action: string, params: Record<string, any> = {}): 
     const res = await fetch(url, { headers });
     return await parseFetchJson(res);
   } catch (e: any) {
-    console.error('apiGet error:', e);
-    return { success: false, message: e.message || 'Jaringan error' };
+    console.error(`[API] apiGet("${action}") gagal:`, e);
+    return { success: false, message: e.message || `Permintaan "${action}" gagal (jaringan).` };
   }
 }
 
@@ -76,7 +83,7 @@ export async function apiPost(action: string, payload: Record<string, any> = {})
     });
     return await parseFetchJson(res);
   } catch (e: any) {
-    console.error('apiPost error:', e);
-    return { success: false, message: e.message || 'Jaringan error' };
+    console.error(`[API] apiPost("${action}") gagal:`, e);
+    return { success: false, message: e.message || `Permintaan "${action}" gagal (jaringan).` };
   }
 }

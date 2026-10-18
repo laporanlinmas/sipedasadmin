@@ -1,11 +1,18 @@
 {
   "name": "sipedas-admin",
   "version": "5.0.0",
-  "description": "Dashboard Monitoring SI-PEDAS Admin Backend",
+  "description": "Dashboard Monitoring SI-PEDAS Admin",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:aduan": "node --experimental-strip-types scripts/seed-aduan.mts",
+    "seed:survey": "node --experimental-strip-types scripts/seed-survey.mts",
+    "verify:aduan": "node --experimental-strip-types scripts/verify-aduan.mts",
+    "verify:survey": "node --experimental-strip-types scripts/verify-survey.mts",
+    "check:satlinmas": "node --experimental-strip-types scripts/check-satlinmas.mts",
+    "check:drive": "node --experimental-strip-types scripts/check-drive.mts",
+    "purge:firestore": "node --experimental-strip-types scripts/purge-firestore.mts"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.1",

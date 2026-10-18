@@ -70,8 +70,6 @@ const BTN_BP =
 const BTN_BP_SM =
   'inline-flex items-center gap-1.5 rounded-md bg-blue px-3 py-[5px] text-[.67rem] font-bold text-white transition-all duration-200 hover:bg-blueh hover:-translate-y-px active:translate-y-0';
 /** bp kecil warna aksen (inline style asli menimpa hover:bg-blueh) */
-const BTN_BP_SM_AMBER =
-  'inline-flex items-center gap-1.5 rounded-md bg-amber px-3 py-[5px] text-[.67rem] font-bold text-white transition-all duration-200 hover:-translate-y-px active:translate-y-0';
 const BTN_BP_SM_RED =
   'inline-flex items-center gap-1.5 rounded-md bg-red px-3 py-[5px] text-[.67rem] font-bold text-white transition-all duration-200 hover:-translate-y-px active:translate-y-0';
 const BTN_BP_AMBER =

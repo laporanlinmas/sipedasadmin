@@ -1,10 +1,11 @@
-import { ClipboardList, UserX, Calendar, AlertTriangle, Users, MessageSquare, MailOpen, Loader2, CheckCircle, Percent, BarChart2, PieChart, LineChart, Clock, Trash2 } from 'lucide-react';
+import { ClipboardList, UserX, Calendar, Users, MessageSquare, MailOpen, CheckCircle, BarChart2, PieChart, LineChart, Clock, Trash2 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp, useAuth, useTheme } from '../App';
 import { Chart } from 'chart.js/auto';
 import { DashboardSkeleton } from '../components/SkeletonPages';
 import { apiGet } from '../services/api';
 import { KATEGORI_LIST } from '../utils/kategori';
+import { currentYearWIB, parseWIB } from '../utils/wib';
 
 // Firebase imports
 import { initializeApp, getApps, getApp } from 'firebase/app';
@@ -67,7 +68,7 @@ const KATEGORI_COLORS: Record<string, string> = {
 };
 
 export const Dashboard: React.FC = () => {
-  const { cacheGet, cacheSet, cacheRefresh, refreshTrigger, showLoad, hideLoad } = useApp();
+  const { cacheGet, cacheRefresh, refreshTrigger } = useApp();
   const { session } = useAuth();
   const { isDarkMode } = useTheme();
 
@@ -88,7 +89,10 @@ export const Dashboard: React.FC = () => {
 
   // New state for aduan
   const [aduanList, setAduanList] = useState<any[]>([]);
-  const [aduanStats, setAduanStats] = useState({ total: 0, baru: 0, diproses: 0, selesai: 0, pct: 0 });
+  const [aduanStats, setAduanStats] = useState({ total: 0, baru: 0, diproses: 0, selesai: 0 });
+
+  // Daftar anggota (sumber sama dengan halaman Data Satlinmas)
+  const [satlinmasList, setSatlinmasList] = useState<any[] | null>(null);
 
   // Digital clock tick
   useEffect(() => {
@@ -153,6 +157,8 @@ export const Dashboard: React.FC = () => {
           const item = {
             id: docSnap.id,
             timestamp: d.timestamp || '',
+            timestampISO: d.timestampISO || '',
+            sortKey: d.sortKey || '',
             status: d.status || 'Baru',
             kategori: d.kategori || 'Lainnya',
           };
@@ -164,9 +170,8 @@ export const Dashboard: React.FC = () => {
           else if (item.status === 'Selesai') selesai++;
         });
 
-        const pct = total > 0 ? Math.round((selesai / total) * 100) : 0;
         setAduanList(list);
-        setAduanStats({ total, baru, diproses, selesai, pct });
+        setAduanStats({ total, baru, diproses, selesai });
       },
       (error) => {
         console.error('Error fetching aduan for dashboard:', error);
@@ -175,6 +180,24 @@ export const Dashboard: React.FC = () => {
 
     return () => unsubscribe();
   }, []);
+
+  // Muat daftar anggota (cache yang sama dipakai halaman Data Satlinmas)
+  useEffect(() => {
+    let cancelled = false;
+
+    const readCache = () => {
+      const cached = cacheGet('satlinmas');
+      const list = cached?.data || cached;
+      if (!cancelled && Array.isArray(list)) setSatlinmasList(list);
+    };
+
+    readCache();
+    cacheRefresh('satlinmas')
+      .then(readCache)
+      .catch((e) => console.error('Error fetching satlinmas for dashboard:', e));
+
+    return () => { cancelled = true; };
+  }, [cacheGet, cacheRefresh, refreshTrigger]);
 
   // Render/Re-render charts
   useEffect(() => {
@@ -295,7 +318,7 @@ export const Dashboard: React.FC = () => {
     // Calculate monthly trend data for Laporan & Aduan
     const laporanCounts = Array(12).fill(0);
     const aduanCounts = Array(12).fill(0);
-    const currentYear = new Date().getFullYear();
+    const currentYear = currentYearWIB();
 
 
     // Parse Laporan
@@ -311,13 +334,12 @@ export const Dashboard: React.FC = () => {
       }
     });
 
-    // Parse Aduan
+    // Parse Aduan — `timestamp` berformat "DD/MM/YYYY HH:MM:SS" (WIB) sehingga
+    // `new Date(raw)` tidak valid; gunakan util WIB yang sama dengan portal.
     aduanList.forEach((a: any) => {
-      if (a.timestamp) {
-        const dt = new Date(a.timestamp);
-        if (!isNaN(dt.getTime()) && dt.getFullYear() === currentYear) {
-          aduanCounts[dt.getMonth()]++;
-        }
+      const dt = parseWIB(a.timestampISO || a.timestamp);
+      if (dt && dt.getFullYear() === currentYear) {
+        aduanCounts[dt.getMonth()]++;
       }
     });
 
@@ -506,7 +528,6 @@ export const Dashboard: React.FC = () => {
 
   // Calculate reports for current month
   let bulanIni = 0;
-  let bulanIniP = 0;
   if (data && data.allData) {
     const currentMonthIndex = new Date().getMonth() + 1; // 1-indexed (1 to 12)
     const currentYearNum = new Date().getFullYear();
@@ -524,15 +545,23 @@ export const Dashboard: React.FC = () => {
         const y = parseInt(m[3], 10);
         if (y === currentYearNum && mo === currentMonthIndex) {
           bulanIni++;
-          const identitas = r.identitas || '';
-          const isp = identitas.trim() !== '' && identitas.toUpperCase() !== 'NIHIL';
-          if (isp) {
-            bulanIniP++;
-          }
         }
       }
     });
   }
+
+  /**
+   * Total anggota memakai sumber yang SAMA dengan halaman Data Satlinmas
+   * (cache `satlinmas`), supaya angkanya selalu cocok dengan daftar anggota
+   * yang terlihat di halaman tersebut. `data.totalAnggota` hanya cadangan.
+   *
+   * Perhitungan biasa (bukan hook) agar aman dipanggil setelah `if (!data)`
+   * di bawah — memakai hook setelah early return melanggar aturan Hook React.
+   */
+  const satlinmasTerisi = Array.isArray(satlinmasList)
+    ? satlinmasList.filter((m: any) => String(m?.nama || '').trim() !== '').length
+    : 0;
+  const totalAnggota = satlinmasTerisi > 0 ? satlinmasTerisi : data?.totalAnggota || 0;
 
   const twData = calculateTriwulan(data.allData || []);
   const reportData = data.allData || [];
@@ -590,8 +619,8 @@ export const Dashboard: React.FC = () => {
         )}
       </div>
 
-      {/* Metrics Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
+      {/* Metrics Summary Cards — 5 kartu (Total Laporan, Sampah, Pelanggaran, Bulan Ini, Total Anggota) */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
         {/* Total Laporan */}
         <div className={SCARD}>
           <span className={`${SCARD_BAR} ${SCARD_TONE.cb.bar}`} />
@@ -620,18 +649,11 @@ export const Dashboard: React.FC = () => {
           <div className={SCARD_TEXT}><div className={SNUM}>{bulanIni}</div><div className={SLBL}>Bulan Ini</div></div>
         </div>
 
-        {/* Pelanggaran Bulan Ini */}
-        <div className={SCARD}>
-          <span className={`${SCARD_BAR} ${SCARD_TONE.ca.bar}`} />
-          <div className={`${SICO} ${SCARD_TONE.ca.ico}`}><AlertTriangle className="w-4 h-4 inline-block align-middle" /></div>
-          <div className={SCARD_TEXT}><div className={SNUM}>{bulanIniP}</div><div className={SLBL}>Pelanggaran Bulan Ini</div></div>
-        </div>
-
         {/* Total Anggota */}
-        <div className={`${SCARD} col-span-2 lg:col-span-1`}>
+        <div className={SCARD}>
           <span className={`${SCARD_BAR} ${SCARD_TONE.cp.bar}`} />
           <div className={`${SICO} ${SCARD_TONE.cp.ico}`}><Users className="w-4 h-4 inline-block align-middle" /></div>
-          <div className={SCARD_TEXT}><div className={SNUM}>{data.totalAnggota || 0}</div><div className={SLBL}>Total Anggota</div></div>
+          <div className={SCARD_TEXT}><div className={SNUM}>{totalAnggota}</div><div className={SLBL}>Total Anggota</div></div>
         </div>
       </div>
 
@@ -672,8 +694,8 @@ export const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Aduan Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+      {/* Aduan Summary Cards — 4 kartu (Total, Baru, Diproses, Selesai) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         {/* Total Aduan */}
         <div className={SCARD}>
           <span className={`${SCARD_BAR} ${SCARD_TONE.cb.bar}`} />
@@ -700,13 +722,6 @@ export const Dashboard: React.FC = () => {
           <span className={`${SCARD_BAR} ${SCARD_TONE.cg.bar}`} />
           <div className={`${SICO} ${SCARD_TONE.cg.ico}`}><CheckCircle className="w-4 h-4 inline-block align-middle" /></div>
           <div className={SCARD_TEXT}><div className={SNUM}>{aduanStats.selesai || 0}</div><div className={SLBL}>Selesai</div></div>
-        </div>
-
-        {/* Persentase Selesai */}
-        <div className={`${SCARD} col-span-2 lg:col-span-1`}>
-          <span className={`${SCARD_BAR} ${SCARD_TONE.cb.bar}`} />
-          <div className={`${SICO} ${SCARD_TONE.cb.ico}`}><Percent className="w-4 h-4 inline-block align-middle" /></div>
-          <div className={SCARD_TEXT}><div className={SNUM}>{aduanStats.pct || 0}%</div><div className={SLBL}>Persentase Selesai</div></div>
         </div>
       </div>
 

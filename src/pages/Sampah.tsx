@@ -31,7 +31,6 @@ const BFOT = 'inline-flex cursor-pointer items-center gap-[5px] rounded-md borde
 const IACT = 'inline-flex h-[26px] w-[26px] shrink-0 cursor-pointer items-center justify-center rounded-[7px] border text-[.68rem] transition-all hover:-translate-y-1 hover:brightness-[.88] hover:shadow-[0_3px_8px_rgba(0,0,0,.12)]';
 const IACT_GREEN = `${IACT} border-[rgba(16,185,129,.15)] bg-greenl text-green`;
 const IACT_RED = `${IACT} border-[rgba(239,68,68,.15)] bg-redl text-red`;
-const IACT_BLUE = `${IACT} border-[rgba(139,92,246,.15)] bg-purplel text-purple`;
 const PGW = 'flex flex-wrap items-center justify-between gap-[7px] border-t border-border px-3.5 py-[9px] text-[.67rem] text-muted';
 const PBN_BASE = 'flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-[.66rem] font-bold transition-all disabled:pointer-events-none disabled:opacity-[.22]';
 const PBN = `${PBN_BASE} border border-border bg-card text-muted hover:border-blue hover:bg-bluelo hover:text-blue`;
@@ -86,7 +85,7 @@ export const Sampah: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<SampahItem | null>(null);
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [alertShow, setAlertShow] = useState(false);
-  const [alertMsg, setAlertMsg] = useState('');
+  const [alertMsg] = useState('');
   const [detailTarget, setDetailTarget] = useState<SampahItem | null>(null);
 
   const fetchSampah = useCallback(async () => {
@@ -358,8 +357,6 @@ export const Sampah: React.FC = () => {
                 currentItems.map((item, i) => {
                   const itemIndex = startIndex + i;
                   const daysLeft = getDaysRemaining(item._deletedAt);
-                  const fotArr = item.fotos || [];
-                  const hasPhotos = fotArr.length > 0;
 
                   return (
                     <tr key={item._ri} className={TR_HOVER}>

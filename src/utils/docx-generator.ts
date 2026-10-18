@@ -367,29 +367,6 @@ function mkTtdTable(opts: {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// wrapCantSplit — bungkus children dalam Table 1×1 cantSplit (tidak terpotong halaman)
-// ─────────────────────────────────────────────────────────────────────────────
-function wrapCantSplit(
-  children: (Paragraph | Table)[],
-  usable: number,
-  marginTopMm = 0
-): Table {
-  return new Table({
-    width:        { size: usable, type: WidthType.DXA },
-    layout:       TableLayoutType.FIXED,
-    columnWidths: [usable],
-    borders:      bNone,
-    rows: [new TableRow({
-      cantSplit: true,
-      children: [new TableCell({
-        width:   { size: usable, type: WidthType.DXA },
-        borders: bNone,
-        margins: { top: TW(marginTopMm), bottom: 0, left: 0, right: 0 },
-        children,
-      })],
-    })],
-  });
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // generateDocxLaporan — entry point

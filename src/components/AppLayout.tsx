@@ -19,37 +19,117 @@ import {
   CctvSkeleton,
 } from './SkeletonPages';
 
-// Error boundary to catch lazy load failures
+/**
+ * Error boundary per halaman.
+ *
+ * catching error ini (render error / gagalnya lazy import) TIDAK lagi
+ * menyamarkan penyebabnya: nama error, pesan, dan component stack
+ * ditampilkan apa adanya supaya mudah didiagnosis.
+ */
 class PageErrorBoundary extends Component<
   { children: React.ReactNode },
-  { hasError: boolean; error?: string }
+  { hasError: boolean; error: Error | null; stack: string; resetKey: number }
 > {
   constructor(props: { children: React.ReactNode }) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null, stack: '', resetKey: 0 };
   }
+
   static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error: error.message };
+    return { hasError: true, error };
   }
+
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('[PageError]:', error, info);
+    console.error('[PageError]', error?.name, error?.message, info?.componentStack);
+    this.setState({ stack: info?.componentStack || '' });
   }
+
+  handleRetry = () => {
+    // resetKey memaksa subtree dibuat ulang tanpa memuat ulang seluruh halaman.
+    this.setState((s) => ({ hasError: false, error: null, stack: '', resetKey: s.resetKey + 1 }));
+  };
+
+  handleCopy = async () => {
+    const e = this.state.error;
+    const text = [
+      '=== SIPEDAS Admin — Detail Error Halaman ===',
+      `Waktu  : ${new Date().toLocaleString('id-ID')}`,
+      `URL    : ${window.location.href}`,
+      `Error  : ${e?.name}: ${e?.message}`,
+      e?.stack ? `\n--- Error stack ---\n${e.stack}` : '',
+      this.state.stack ? `\n--- Component stack ---\n${this.state.stack}` : '',
+    ].join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      console.log(text);
+    }
+  };
+
   render() {
-    if (this.state.hasError) {
-      return (
-        <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
-          <XCircle className="h-10 w-10 text-muted opacity-50" />
-          <p className="text-sm text-mid">Terjadi penyegaran komponen sistem, silakan coba lagi.</p>
+    const { hasError, error, stack } = this.state;
+    if (!hasError) {
+      return <React.Fragment key={this.state.resetKey}>{this.props.children}</React.Fragment>;
+    }
+
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+        <XCircle className="h-10 w-10 text-red opacity-70" />
+
+        <div>
+          <p className="text-[.95rem] font-extrabold text-text">Halaman gagal ditampilkan</p>
+          <p className="mt-1 text-sm text-mid">
+            Komponen ini mengalami error saat render. Detailnya ada di bawah.
+          </p>
+        </div>
+
+        {/* Nama + pesan error apa adanya */}
+        <div className="w-full max-w-2xl overflow-hidden rounded-lg border border-[var(--border)] bg-bg text-left">
+          <div className="flex items-center justify-between gap-2 border-b border-[var(--border)] px-3 py-1.5">
+            <span className="text-[.6rem] font-extrabold uppercase tracking-[.1em] text-muted">
+              {error?.name || 'Error'}
+            </span>
+            <button
+              type="button"
+              onClick={this.handleCopy}
+              className="cursor-pointer rounded border border-[var(--border)] bg-card px-2 py-0.5 text-[.62rem] font-bold text-mid transition-colors hover:border-blue hover:text-blue"
+            >
+              Salin detail
+            </button>
+          </div>
+          <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words px-3 py-2 font-mono text-[.72rem] leading-relaxed text-text">
+            {error?.message || 'Pesan error kosong.'}
+          </pre>
+          {(error?.stack || stack) && (
+            <details className="border-t border-[var(--border)]">
+              <summary className="cursor-pointer px-3 py-1.5 text-[.62rem] font-bold text-mid hover:text-blue">
+                Tampilkan stack trace
+              </summary>
+              <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-words px-3 pb-2 font-mono text-[.68rem] leading-relaxed text-mid">
+                {`${error?.stack || ''}${stack ? `\n${stack}` : ''}`}
+              </pre>
+            </details>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <button
-            className="mt-2 inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-blue px-4 py-2 text-sm font-bold text-white transition-all duration-200 hover:-translate-y-px hover:bg-blueh active:translate-y-0"
-            onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
+            type="button"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-blue px-4 py-2 text-sm font-bold text-white transition-all duration-200 hover:-translate-y-px hover:bg-blueh active:translate-y-0"
+            onClick={this.handleRetry}
           >
             Coba Lagi
           </button>
+          <button
+            type="button"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-[var(--border)] bg-card px-4 py-2 text-sm font-bold text-mid transition-all duration-200 hover:border-blue hover:text-blue"
+            onClick={() => window.location.reload()}
+          >
+            Muat Ulang Halaman
+          </button>
         </div>
-      );
-    }
-    return this.props.children;
+      </div>
+    );
   }
 }
 

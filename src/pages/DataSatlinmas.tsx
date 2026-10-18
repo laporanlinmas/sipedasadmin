@@ -77,20 +77,14 @@ export const DataSatlinmas: React.FC = () => {
     setCurrentPage(1);
   }, [searchName, searchUnit]);
 
-  const { totalItems, totalPages, currentMembers, unitCount } = useMemo(() => {
+  const { totalPages, currentMembers } = useMemo(() => {
     const total = filteredMembers.length;
     const pages = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     const current = filteredMembers.slice(start, start + ITEMS_PER_PAGE);
 
-    const counts: Record<string, number> = {};
-    allMembers.forEach((m) => {
-      const k = m.unit || 'Lainnya';
-      counts[k] = (counts[k] || 0) + 1;
-    });
-
-    return { totalItems: total, totalPages: pages, currentMembers: current, unitCount: counts };
-  }, [filteredMembers, currentPage, allMembers]);
+    return { totalPages: pages, currentMembers: current };
+  }, [filteredMembers, currentPage]);
 
   const handleResetFilters = () => {
     setSearchName('');

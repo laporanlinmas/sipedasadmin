@@ -1,9 +1,9 @@
-import { Map, Printer, RefreshCw, Compass, Plus, ChevronUp, ChevronLeft, ChevronRight, ChevronDown, Navigation, Crosshair, Layers, Paintbrush, Minimize2, Maximize2, Loader2, Minus, Route, Save, Download, Eraser, Footprints, Shield, HeartPulse, Flame, UsersRound, Folder } from 'lucide-react';
+import { Map, Printer, RefreshCw, Compass, Plus, ChevronUp, ChevronLeft, ChevronRight, ChevronDown, Navigation, Crosshair, Layers, Paintbrush, Minimize2, Maximize2, Loader2, Minus, Route, Save, Download, Eraser } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp, useAuth } from '../App';
 import { apiGet, apiPost } from '../services/api';
-import { esc, escUrlAttr, hexToRgb, isMobileView } from '../utils/helpers';
-import { Settings, LayerPeta, Drawing } from '../types';
+import { esc, isMobileView } from '../utils/helpers';
+import { LayerPeta, Drawing } from '../types';
 import { ConfirmModal } from '../components/common/ConfirmModal';
 
 // Modular Sub-components
@@ -12,7 +12,6 @@ import {
   SATGAS_KATEGORI_LIST,
   normalizeKategori,
   JALAN_GROUPS,
-  resolveKelompok
 } from '../components/peta/StreetPhotoPanel';
 import { DrawMetaModal } from '../components/peta/DrawMetaModal';
 import { EditLayersModal } from '../components/peta/EditLayersModal';
@@ -82,8 +81,12 @@ export const PetaPedestrian: React.FC = () => {
   const [isInitialFetching, setIsInitialFetching] = useState(true);
   const [mapLoadError, setMapLoadError] = useState<string | null>(null);
   const [mapLoadAttempt, setMapLoadAttempt] = useState(0);
-  const [isMapReady, setIsMapReady] = useState(false);
   const [targetLocation, setTargetLocation] = useState<{ lat: number; lng: number } | null>(null);
+  // PENTING: deklarasi ini harus mendahului efek yang memakainya (lihat efek
+  // "Jika ada target location" di bawah). Kalau tidak, render pertama melempar
+  // `ReferenceError: Cannot access 'isMapReady' before initialization`
+  // karena `const` berada di temporal dead zone.
+  const [isMapReady, setIsMapReady] = useState(false);
 
   // Baca parameter lokasi dari URL (lat & lng) — untuk "Buka di Peta" dari detail laporan
   useEffect(() => {
@@ -211,11 +214,9 @@ export const PetaPedestrian: React.FC = () => {
     dpi: 3,
     printTile: 'osm',
   });
-  const [pdfLegendRows, setPdfLegendRows] = useState<any[]>([]);
   const [pdfRenderBusy, setPdfRenderBusy] = useState(false);
   const [pdfRenderProgress, setPdfRenderProgress] = useState(0);
   const [pdfRenderTxt, setPdfRenderTxt] = useState('Menyiapkan render...');
-  const [pdfRenderSub, setPdfRenderSub] = useState('Mohon tunggu...');
 
   // Constants
   const PETA_CENTER: [number, number] = [-7.87148, 111.47032];
@@ -306,21 +307,6 @@ export const PetaPedestrian: React.FC = () => {
     topo: { url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', attr: 'OpenTopoMap', label: 'Topografi', maxZoom: 17 }
   };
 
-  const FA_UNICODE: Record<string, string> = {
-    'fa-route': '\uf4d7',
-    'fa-triangle-exclamation': '\uf071',
-    'fa-shield-halved': '\uf3ed',
-    'fa-store': '\uf54e',
-    'fa-draw-polygon': '\uf5ee',
-    'fa-building': '\uf1ad',
-    'fa-video': '\uf03d',
-    'fa-square-parking': '\uf540',
-    'fa-map-pin': '\uf276',
-    'fa-location-dot': '\uf3c5',
-    'fa-camera': '\uf030',
-    'fa-road': '\uf018',
-    'fa-map-location-dot': '\uf5a0'
-  };
 
   // Get config & settings on mount
   useEffect(() => {
@@ -867,8 +853,7 @@ export const PetaPedestrian: React.FC = () => {
           const name = draw.properti?.nama || 'Coretan';
           const ket = draw.properti?.ket || '';
           const type = draw.type || 'polyline';
-          const ico = type === 'polyline' ? 'fa-route' : 'fa-draw-polygon';
-          const label = type === 'polyline' ? 'Garis / Rute' : 'Area / Zona';
+                  const label = type === 'polyline' ? 'Garis / Rute' : 'Area / Zona';
           
           let msrText = '';
           try {
@@ -1312,19 +1297,6 @@ export const PetaPedestrian: React.FC = () => {
   // --- PRINT PDF MODAL METHODS ---
   const openPdfModal = async () => {
     setShowPdfModal(true);
-    setPdfLegendRows([]);
-
-    // Populate default print legend rows based on active layers
-    const uniqueSymbols = Array.from(new Set(layersList.map((l) => l.simbol)));
-    const initialLegend = uniqueSymbols.map((symId) => {
-      const def = SIMBOL_DEF.find((s) => s.id === symId) || SIMBOL_DEF[0];
-      return {
-        ico: def.ico,
-        warna: def.warna,
-        label: def.label,
-      };
-    });
-    setPdfLegendRows(initialLegend);
 
     // Small delay to let container map mount, then init preview map
     setTimeout(initPdfPreviewMap, 100);
@@ -1474,8 +1446,7 @@ export const PetaPedestrian: React.FC = () => {
 
     // Move Leaflet map container into the print portal's spp-map-div
     const printMapSlot = document.getElementById('spp-map-div');
-    const previewSlot  = document.getElementById('pdf-map-preview');
-    const mapContainer = map.getContainer();
+      const mapContainer = map.getContainer();
     const originalParent = mapContainer.parentElement;
     const originalNextSibling = mapContainer.nextSibling;
 
@@ -2021,13 +1992,11 @@ export const PetaPedestrian: React.FC = () => {
         pdfRenderBusy={pdfRenderBusy}
         pdfRenderProgress={pdfRenderProgress}
         pdfRenderTxt={pdfRenderTxt}
-        pdfRenderSub={pdfRenderSub}
         petaTitle={petaTitle}
         layersList={layersList}
         photosList={photosList}
         allDrawings={allDrawings}
         SIMBOL_DEF={SIMBOL_DEF}
-        JALAN_GROUPS={JALAN_GROUPS}
       />
 
     </div>

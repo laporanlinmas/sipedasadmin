@@ -1,4 +1,4 @@
-import { Loader2, CheckCircle, MessageSquare, Eye, Edit, Clock, Camera, ChevronLeft, ChevronRight, AlertTriangle, Inbox, Mail, Search, RotateCcw, Calendar, MapPin, Reply, Image, Globe, Bot, Tag, User } from 'lucide-react';
+import { CheckCircle, MessageSquare, Edit, Clock, Camera, ChevronLeft, ChevronRight, AlertTriangle, Inbox, Mail, Search, RotateCcw, Calendar, MapPin, Reply, Image, Globe, Bot, Tag, User } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
 const getAduanMetaIcon = (ico: string, className = "w-3 h-3 inline-block mr-1 align-text-bottom", color?: string) => {
@@ -21,6 +21,7 @@ const getAduanMetaIcon = (ico: string, className = "w-3 h-3 inline-block mr-1 al
 import { useApp, useAuth } from '../App';
 import { apiPost } from '../services/api';
 import { esc } from '../utils/helpers';
+import { sortTimeWIB, timestampWIB } from '../utils/wib';
 import { Modal } from '../components/common/Modal';
 import { AduanSkeleton } from '../components/SkeletonPages';
 import { CustomDropdown } from '../components/common/CustomDropdown';
@@ -65,20 +66,35 @@ const SCARD_TEXT = 'flex flex-col gap-0.5 portrait:max-md:min-w-0 portrait:max-m
 const MCARD_ITEM = 'relative mb-3 w-full rounded-[var(--r)] border border-border bg-card p-[14px] shadow-[var(--sh)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shl)]';
 const PGW = 'flex flex-wrap items-center justify-between gap-[7px] border-t border-border p-[14px] text-[.67rem] text-muted';
 
+/**
+ * Bentuk dokumen pada koleksi `aduan` — identik dengan `AduanRecord` yang
+ * dibangun portal Sapa Pedestrian (`buildAduanRecord`):
+ * ticket, timestamp, timestampISO, sortKey, nama, kategori, lokasi,
+ * deskripsi, fotos[], jumlahFoto, status, catatan, fotoTindakLanjut,
+ * updatedAt, source.  ID dokumen = `ticket`.
+ */
 interface Complaint {
   id: string;
   ticket: string;
   timestamp: string;
+  timestampISO?: string;
+  sortKey?: string;
   nama: string;
   kategori: string;
   lokasi: string;
   deskripsi: string;
   fotos?: string[];
+  jumlahFoto?: number;
   status: string;
   catatan: string;
   updatedAt?: string;
   source?: string;
   fotoTindakLanjut?: string;
+}
+
+/** Nilai urut kronologis (WIB) — lihat `sortTimeWIB` di utils/wib. */
+function complaintSortTime(c: Complaint): number {
+  return sortTimeWIB(c);
 }
 
 // Inisialisasi Firebase
@@ -146,24 +162,24 @@ export const Aduan: React.FC = () => {
             id: docSnap.id,
             ticket: data.ticket || docSnap.id,
             timestamp: data.timestamp || '',
+            timestampISO: data.timestampISO || '',
+            sortKey: data.sortKey || '',
             nama: data.nama || '',
             kategori: data.kategori || '',
             lokasi: data.lokasi || '',
             deskripsi: data.deskripsi || '',
             fotos: data.fotos || [],
+            jumlahFoto: Number(data.jumlahFoto) || (Array.isArray(data.fotos) ? data.fotos.length : 0),
             status: data.status || 'Baru',
             catatan: data.catatan || '',
             updatedAt: data.updatedAt || '',
-            source: data.source || 'Chatbot',
+            source: data.source || 'Website',
             fotoTindakLanjut: data.fotoTindakLanjut || '',
           });
         });
 
-        // Sort by timestamp desc (newest first)
-        list.sort((a, b) => {
-          // Parse timestamp if possible, fallback string comparison
-          return b.timestamp.localeCompare(a.timestamp);
-        });
+        // Urut dari yang terbaru (kronologis, bukan leksikal)
+        list.sort((a, b) => complaintSortTime(b) - complaintSortTime(a));
 
         setAllAduan(list);
         setIsFetching(false);
@@ -220,8 +236,19 @@ export const Aduan: React.FC = () => {
     const s = String(status || '').toLowerCase();
     if (s === 'selesai') return `${CHIP} bg-greenl text-green`;
     if (s === 'diproses') return `${CHIP} bg-amberl text-amber`;
+    if (s === 'ditolak') return `${CHIP} bg-redl text-red`;
     return `${CHIP} bg-bluelo text-blue`; // Baru / Default
   };
+
+  const STATUS_OPTIONS = [
+    { value: 'Baru', label: 'Baru' },
+    { value: 'Diproses', label: 'Diproses' },
+    { value: 'Selesai', label: 'Selesai' },
+    { value: 'Ditolak', label: 'Ditolak' },
+  ];
+
+  /** Ikon sumber laporan: Chatbot → robot, sisanya (Web/Form) → globe. */
+  const sourceIcon = (source?: string) => (/chat|bot/i.test(source || '') ? 'fa-robot' : 'fa-globe');
 
   // Open Gallery for complaint photos
   const handleOpenGallery = (photos: string[]) => {
@@ -277,21 +304,9 @@ export const Aduan: React.FC = () => {
         }
       }
 
-      // Generate WIB timestamp
-      const getTimestampWIB = () => {
-        const d = new Date();
-        const wibDate = new Date(d.getTime() + (7 * 60 * 60 * 1000) + (d.getTimezoneOffset() * 60 * 1000));
-        const pad = (n: number) => String(n).padStart(2, '0');
-        const dd = pad(wibDate.getDate());
-        const mm = pad(wibDate.getMonth() + 1);
-        const yyyy = wibDate.getFullYear();
-        const hh = pad(wibDate.getHours());
-        const min = pad(wibDate.getMinutes());
-        const ss = pad(wibDate.getSeconds());
-        return `${dd}-${mm}-${yyyy} ${hh}.${min}.${ss} WIB`;
-      };
-
-      const ts = getTimestampWIB();
+      // Stempel waktu WIB dengan format yang sama seperti portal
+      // (DD/MM/YYYY HH:MM:SS) — ditampilkan mentah oleh pelacak tiket.
+      const ts = timestampWIB();
 
       // Update Firestore document
       const docRef = doc(db, 'aduan', targetAduan.id);
@@ -438,7 +453,7 @@ export const Aduan: React.FC = () => {
             className="min-w-[120px] flex-[1_1_120px]"
             value={statusFilter}
             onChange={(v) => setStatusFilter(String(v))}
-            options={[{ value: '', label: 'Semua Status' }, { value: 'Baru', label: 'Baru' }, { value: 'Diproses', label: 'Diproses' }, { value: 'Selesai', label: 'Selesai' }]}
+            options={[{ value: '', label: 'Semua Status' }, ...STATUS_OPTIONS]}
           />
           <button className={`${BG2} ${FBAR_CHILD}`} onClick={handleResetFilters} title="Reset Filter">
             <RotateCcw className="w-4 h-4" />
@@ -647,7 +662,7 @@ export const Aduan: React.FC = () => {
             <div className="mb-3.5 grid grid-cols-2 gap-0 overflow-hidden rounded-lg border border-border">
               {[
                 { label: 'Tanggal', value: detailAduan.timestamp, icon: 'fa-calendar', color: 'var(--blue)' },
-                { label: 'Sumber', value: detailAduan.source || 'Chatbot', icon: detailAduan.source === 'Website' ? 'fa-globe' : 'fa-robot', color: 'var(--muted)' },
+                { label: 'Sumber', value: detailAduan.source || 'Website', icon: sourceIcon(detailAduan.source), color: 'var(--muted)' },
                 { label: 'Pelapor', value: detailAduan.nama, icon: 'fa-user', color: 'var(--teal)' },
                 { label: 'Kategori', value: detailAduan.kategori, icon: 'fa-tag', color: 'var(--purple)' },
               ].map((item, idx) => (
@@ -756,7 +771,7 @@ export const Aduan: React.FC = () => {
                 className={FCTL}
                 value={statusVal}
                 onChange={(v) => setStatusVal(String(v))}
-                options={[{ value: 'Baru', label: 'Baru' }, { value: 'Diproses', label: 'Diproses' }, { value: 'Selesai', label: 'Selesai' }]}
+                options={STATUS_OPTIONS}
               />
             </div>
 

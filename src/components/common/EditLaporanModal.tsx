@@ -2,7 +2,7 @@ import {
   Edit, Save, Info, X, Plus,
   GripVertical, ChevronLeft, ChevronRight,
 } from 'lucide-react';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Laporan } from '../../types';
 import { makeDriveThumbUrl } from '../../utils/helpers';
 import { apiPost } from '../../services/api';

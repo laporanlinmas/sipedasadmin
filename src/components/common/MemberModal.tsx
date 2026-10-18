@@ -1,4 +1,4 @@
-import { UserPlus, Save, Calendar } from 'lucide-react';
+import { UserPlus, Save } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { Satlinmas } from '../../types';
 import { apiPost } from '../../services/api';
@@ -8,14 +8,10 @@ import { CustomDropdown } from './CustomDropdown';
 
 /* ── Canonical Tailwind class sets (konversi dari styles/*.css) ── */
 const FLBL = 'mb-1 block text-[.62rem] font-extrabold uppercase tracking-[.07em] text-mid';
-const FCTL =
-  'w-full rounded-md border border-border bg-card px-3 py-[9px] text-[.82rem] text-text transition-all duration-200 outline-none focus:border-blue focus:shadow-[0_0_0_3px_var(--bluelo)]';
 /** .fctl dengan radius override 10px (asli: style borderRadius 10px) */
 const FCTL10 =
   'w-full rounded-[10px] border border-border bg-card px-3 py-[9px] text-[.82rem] text-text transition-all duration-200 outline-none focus:border-blue focus:shadow-[0_0_0_3px_var(--bluelo)]';
 /** .fctl versi kalender (padding 6px 10px, tinggi 34px, radius 10px, font .75rem) */
-const FCTL_CAL =
-  'h-[34px] w-full rounded-[10px] border border-border bg-card px-[10px] py-1.5 text-[.75rem] text-text transition-all duration-200 outline-none focus:border-blue focus:shadow-[0_0_0_3px_var(--bluelo)]';
 const FROW = 'mb-2.5 grid grid-cols-2 gap-2.5 portrait:max-md:grid-cols-1';
 const FCOL = 'flex flex-col';
 const FGRP = 'mb-2.5';

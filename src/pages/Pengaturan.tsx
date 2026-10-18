@@ -1,6 +1,6 @@
-import { Key, Save, UserPlus, Plus, Edit, PlusCircle, Shield, ChevronDown, Eye, EyeOff, UserCheck, FileText, Heading, Hash, PenTool, CheckSquare, MessageCircle, Loader2, Trash2, CheckCircle, Users, UserCog, Lock, AlertTriangle } from 'lucide-react';
+import { Key, Save, UserPlus, Plus, Edit, PlusCircle, Shield, ChevronDown, Eye, EyeOff, FileText, Heading, Hash, PenTool, CheckSquare, MessageCircle, Loader2, Trash2, CheckCircle, Users, UserCog, Lock, AlertTriangle } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
-import { useApp, useAuth, useTheme } from '../App';
+import { useApp, useAuth } from '../App';
 import { apiGet, apiPost } from '../services/api';
 import { esc } from '../utils/helpers';
 import { ConfirmModal } from '../components/common/ConfirmModal';
@@ -41,7 +41,6 @@ const AG_INFO = 'min-w-0 flex-1';
 const AG_NAME = 'mb-0.5 truncate text-[.85rem] font-bold leading-[1.25]';
 const AG_ACT = 'z-[2] static ml-3 flex gap-1.5';
 const AG_META = 'mt-1.5 flex flex-wrap gap-1.5';
-const SEC_LBL = 'mb-2 text-[.65rem] font-extrabold uppercase tracking-[.04em] text-mid';
 const DESC = 'text-[.72rem] leading-[1.55] text-muted';
 
 // Permission modules
@@ -59,7 +58,7 @@ const PERMISSION_MODULES = [
   { key: 'peta', label: 'Peta Satgas', desc: 'Lihat peta satgas' },
   { key: 'cctv', label: 'CCTV Pedestrian', desc: 'Lihat CCTV pedestrian' },
   { key: 'aduan', label: 'Aduan', desc: 'Kelola aduan masyarakat' },
-  { key: 'survei', label: 'Survei Kepuasan', desc: 'Lihat survei kepuasan' },
+  { key: 'survei', label: 'Rating Layanan', desc: 'Lihat rating layanan masyarakat' },
   { key: 'sampah', label: 'Sampah', desc: 'Kelola sampah laporan' },
   { key: 'pengaturan', label: 'Pengaturan', desc: 'Akses pengaturan sistem' },
 ];
@@ -75,13 +74,11 @@ interface UserAccount {
 export const Pengaturan: React.FC = () => {
   const { showLoad, hideLoad, triggerToast } = useApp();
   const { session } = useAuth();
-  const { isDarkMode, toggleDarkMode } = useTheme();
 
   // Panels Accordion States
   const [openPanels, setOpenPanels] = useState<Record<string, boolean>>({
     akun: false,
     pdfTunggal: false,
-    pdfKolektif: false,
     peta: false,
     nowa: false,
     unit: false,
@@ -94,7 +91,7 @@ export const Pengaturan: React.FC = () => {
   const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
 
   const [alertShow, setAlertShow] = useState(false);
-  const [alertMsg, setAlertMsg] = useState('');
+  const [alertMsg] = useState('');
 
   const askConfirm = (msg: string, action: () => void) => {
     setConfirmMsg(msg);
@@ -133,19 +130,6 @@ export const Pengaturan: React.FC = () => {
   const [pdfCategorySettings, setPdfCategorySettings] = useState<Record<string, string>>({});
   const [pdfSinglePreviewHtml, setPdfSinglePreviewHtml] = useState('');
 
-  // PDF Kolektif form states
-  const [kolJudul, setKolJudul] = useState('');
-  const [kolSubjudul, setKolSubjudul] = useState('');
-  const [kolJabatan, setKolJabatan] = useState('');
-  const [kolNama, setKolNama] = useState('');
-  const [kolPangkat, setKolPangkat] = useState('');
-  const [kolNip, setKolNip] = useState('');
-  const [pdfKolektifPreviewHtml, setPdfKolektifPreviewHtml] = useState('');
-
-  // Peta form states
-  const [petaJudul, setPetaJudul] = useState('');
-  const [petaJabatan, setPetaJabatan] = useState('');
-  const [petaNama, setPetaNama] = useState('');
 
   // WA Piket (NoWA) states
   const [nowaList, setNowaList] = useState<WaPiket[]>([]);
@@ -164,7 +148,6 @@ export const Pengaturan: React.FC = () => {
 
   // Timers for live previews debouncing
   const pdfPreviewTimer = useRef<any>(null);
-  const kolPreviewTimer = useRef<any>(null);
 
   const applyPdfCategorySettings = (category: string, settings: Record<string, string | undefined>) => {
     const values = getCategoryPdfSettings(settings, category);
@@ -233,17 +216,6 @@ export const Pengaturan: React.FC = () => {
           const d = res.data || {};
           setPdfCategorySettings(d);
           applyPdfCategorySettings('pedestrian', d);
-
-          setKolJudul(d.kol_judul || 'LAPORAN PATROLI WILAYAH PEDESTRIAN');
-          setKolSubjudul(d.kol_subjudul || 'SATGAS LINMAS PEDESTRIAN');
-          setKolJabatan(d.kol_jabatan || 'Kepala Bidang SDA dan LINMAS');
-          setKolNama(d.kol_nama || 'Erry Setiyoso Birowo, SP');
-          setKolPangkat(d.kol_pangkat || 'Pembina');
-          setKolNip(d.kol_nip || '19751029 200212 1 008');
-
-          setPetaJudul(d.peta_judul || 'PETA SATGAS KABUPATEN PONOROGO');
-          setPetaJabatan(d.peta_jabatan || 'Kepala Bidang SDA dan Linmas');
-          setPetaNama(d.peta_nama || 'Erry Setiyoso Birowo, SP');
 
           if (d.units) {
             const parsed = d.units.split(',').map((u: string) => u.trim()).filter(Boolean);
@@ -395,42 +367,6 @@ export const Pengaturan: React.FC = () => {
     }
   };
 
-  // Update Collective PDF Preview in background
-  const loadKolektifPreview = async () => {
-    const sampleRows = [
-      {
-        ts: new Date().toLocaleDateString('id-ID'),
-        lokasi: 'Area Pedestrian Kota Ponorogo',
-        hari: 'Senin',
-        tanggal: '1 Januari 2026',
-        identitas: 'NIHIL',
-        personil: 'Contoh Personil A, B, C',
-        danru: 'Danru 1',
-        namaDanru: 'Nama Danru Contoh',
-        keterangan: 'Pelaksanaan berjalan aman dan lancar.',
-      },
-    ];
-
-    try {
-      const res = await apiPost('generateKolektifHtml', {
-        rows: sampleRows,
-        tglFrom: '',
-        tglTo: '',
-        kopSurat: '',
-        judul: kolJudul,
-        subjudul: kolSubjudul,
-        jabatanTtd: kolJabatan,
-        namaTtd: kolNama,
-        pangkatTtd: kolPangkat,
-        nipTtd: kolNip,
-      });
-      if (res.success) {
-        setPdfKolektifPreviewHtml(res.data?.html || res.html || '');
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   // Debounced side-effects when form values edit
   useEffect(() => {
@@ -440,12 +376,6 @@ export const Pengaturan: React.FC = () => {
     return () => clearTimeout(pdfPreviewTimer.current);
   }, [pdfJudul, pdfTujuan, pdfAnggota, pdfPukul, pdfJabatan, pdfNama, pdfPangkat, pdfNip, openPanels.pdfTunggal]);
 
-  useEffect(() => {
-    if (!openPanels.pdfKolektif) return;
-    clearTimeout(kolPreviewTimer.current);
-    kolPreviewTimer.current = setTimeout(loadKolektifPreview, 1000);
-    return () => clearTimeout(kolPreviewTimer.current);
-  }, [kolJudul, kolSubjudul, kolJabatan, kolNama, kolPangkat, kolNip, openPanels.pdfKolektif]);
 
   // Form Submissions
   const handleChangePassword = async () => {
@@ -510,66 +440,25 @@ export const Pengaturan: React.FC = () => {
     }
   };
 
-  const handleSavePdfKolektifSettings = async () => {
-    showLoad('Menyimpan...');
-    try {
-      const res = await apiPost('saveSettings', {
-        kol_judul: kolJudul,
-        kol_subjudul: kolSubjudul,
-        kol_jabatan: kolJabatan,
-        kol_nama: kolNama,
-        kol_pangkat: kolPangkat,
-        kol_nip: kolNip,
-      });
-      hideLoad();
-      if (res.success) {
-        triggerToast('Pengaturan PDF Kolektif disimpan.', 'ok');
-      } else {
-        triggerToast(res.message || 'Gagal menyimpan.', 'er');
-      }
-    } catch (e: any) {
-      hideLoad();
-      triggerToast(e.message || 'Error', 'er');
-    }
-  };
 
-  const handleSavePetaSettings = async () => {
-    showLoad('Menyimpan...');
-    try {
-      const res = await apiPost('saveSettings', {
-        peta_judul: petaJudul,
-        peta_jabatan: petaJabatan,
-        peta_nama: petaNama,
-      });
-      hideLoad();
-      if (res.success) {
-        triggerToast('Pengaturan Peta disimpan.', 'ok');
-      } else {
-        triggerToast(res.message || 'Gagal menyimpan.', 'er');
-      }
-    } catch (e: any) {
-      hideLoad();
-      triggerToast(e.message || 'Error', 'er');
-    }
-  };
 
   // WA Piket (NoWA) CRUD Operations
-  const openAddNoWa = () => {
+  const openAddNoWa = (day?: string) => {
     setNowaFormMode('add');
     setNowaFormRi('');
     setNowaFormNama('');
     setNowaFormNumber('');
-    setNowaFormJadwal('');
+    setNowaFormJadwal(day || '');
     setNowaFormKeterangan('');
     setNowaModalShow(true);
   };
 
-  const openEditNoWa = (item: WaPiket) => {
+  const openEditNoWa = (item: WaPiket, day?: string) => {
     setNowaFormMode('edit');
     setNowaFormRi(item._ri);
     setNowaFormNama(item.nama);
     setNowaFormNumber(item.number);
-    setNowaFormJadwal(item.jadwal);
+    setNowaFormJadwal(day || item.jadwal);
     setNowaFormKeterangan(item.keterangan || '');
     setNowaModalShow(true);
   };
@@ -968,15 +857,7 @@ export const Pengaturan: React.FC = () => {
                         <div className={AG_ACT}>
                           <button
                             className={`${BFOT} ${ICON_BTN}`}
-                            onClick={() => {
-                              setNowaFormMode('add');
-                              setNowaFormRi('');
-                              setNowaFormNama('');
-                              setNowaFormNumber('');
-                              setNowaFormJadwal(day);
-                              setNowaFormKeterangan('');
-                              setNowaModalShow(true);
-                            }}
+                            onClick={() => openAddNoWa(day)}
                             title="Tambah Petugas"
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -1017,15 +898,7 @@ export const Pengaturan: React.FC = () => {
                       <div className={AG_ACT}>
                         <button
                           className={`${BE} ${ICON_BTN}`}
-                          onClick={() => {
-                            setNowaFormMode('edit');
-                            setNowaFormRi(r._ri);
-                            setNowaFormNama(r.nama);
-                            setNowaFormNumber(r.number);
-                            setNowaFormJadwal(day);
-                            setNowaFormKeterangan(r.keterangan || '');
-                            setNowaModalShow(true);
-                          }}
+                          onClick={() => openEditNoWa(r, day)}
                           title="Edit"
                         >
                           <Edit className="w-3.5 h-3.5" />

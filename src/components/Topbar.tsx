@@ -54,7 +54,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onToggleMobileSidebar }) => {
       case 'set':
         return { title: 'Pengaturan Sistem', subtitle: 'Kelola akun, template cetak & konfigurasi' };
       case 'sv':
-        return { title: 'Survei Kepuasan', subtitle: 'Analisis & statistik tingkat kepuasan layanan' };
+        return { title: 'Rating Layanan', subtitle: 'Analisis & statistik penilaian layanan Sapa Pedestrian' };
       default:
         return { title: 'Dashboard', subtitle: 'Statistik & grafik data patroli' };
     }

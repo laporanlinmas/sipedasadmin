@@ -1,0 +1,31 @@
+# Berkas yang TIDAK boleh ikut ter-deploy ke Vercel.
+#
+# Isi folder ini hanya skrip operasional (seed/verifikasi data demo) yang
+# dijalankan manual dari komputer maintainer — tidak pernah dibutuhkan
+# oleh aplikasi di server. `.env` SENGAJA tidak dikecualikan: kredensial
+# Google/Firebase dipakai API Route Handler saat build & runtime.
+
+# Skrip operasional
+scripts/
+
+# Berkas sementara Vite
+*.timestamp-*.mjs
+
+# Hasil build lokal (Vercel membangun ulang sendiri)
+dist/
+dist-api/
+out/
+
+# Log & berkas sementara
+*.log
+npm-debug.log*
+.vite/
+
+# Editor & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Dokumentasi
+README.md

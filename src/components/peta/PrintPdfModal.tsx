@@ -1,4 +1,4 @@
-import { X, Printer, Info, FileText, Maximize2, Image } from 'lucide-react';
+import { X, Printer, Info, FileText, Maximize2 } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -60,17 +60,15 @@ interface PrintPdfModalProps {
   pdfRenderBusy: boolean;
   pdfRenderProgress: number;
   pdfRenderTxt: string;
-  pdfRenderSub: string;
   petaTitle?: string;
   layersList?: any[];
   photosList?: any[];
   allDrawings?: any[];
   SIMBOL_DEF?: any[];
-  JALAN_GROUPS?: any[];
 }
 
 /* ─── Legend items builder ───────────────────────────── */
-function buildLegend(opts: any, layersList: any[], allDrawings: any[], photosList: any[], SIMBOL_DEF: any[], JALAN_GROUPS: any[]) {
+function buildLegend(opts: any, layersList: any[], allDrawings: any[], photosList: any[], SIMBOL_DEF: any[]) {
   const items: { color: string; label: string; type: 'marker' | 'line' | 'area' | 'dot' }[] = [];
 
   if (opts.showLayers) {
@@ -345,7 +343,7 @@ export const PrintPdfModal: React.FC<PrintPdfModalProps> = ({
   pdfRenderBusy, pdfRenderProgress, pdfRenderTxt,
   petaTitle = 'PETA PEDESTRIAN KABUPATEN PONOROGO',
   layersList = [], photosList = [], allDrawings = [],
-  SIMBOL_DEF = [], JALAN_GROUPS = [],
+  SIMBOL_DEF = [],
 }) => {
   // Inject @page rule dynamically
   const styleRef = useRef<HTMLStyleElement | null>(null);
@@ -395,7 +393,7 @@ export const PrintPdfModal: React.FC<PrintPdfModalProps> = ({
 
   if (!show) return null;
 
-  const legendItems = buildLegend(pdfOpts, layersList, allDrawings, photosList, SIMBOL_DEF, JALAN_GROUPS);
+  const legendItems = buildLegend(pdfOpts, layersList, allDrawings, photosList, SIMBOL_DEF);
   const currentPaper = PAPER[(pdfOpts.paperSize as PaperKey)] ?? PAPER.a4;
 
   return (

@@ -470,11 +470,16 @@ export async function getDashboardData(): Promise<any> {
       if (hariMap.hasOwnProperty(r.hari)) hariMap[r.hari]++;
     });
 
+    // Jumlah anggota: hitung baris yang kolom NAMA-nya terisi — sama seperti
+    // `getSatlinmasData()`, sehingga kartu "Total Anggota" di dashboard selalu
+    // sama dengan jumlah baris pada halaman Data Satlinmas.
     let totalAnggota = 0;
     try {
       const satRows = await getSheetValues(SHEET_SATLINMAS);
-      if (satRows.length >= 2) totalAnggota = satRows.length - 1;
-    } catch (e2) { }
+      totalAnggota = satRows.slice(1).filter(r => String(r[CS.NAMA] || '').trim() !== '').length;
+    } catch (e2) {
+      console.warn('[dashboard] Gagal menghitung anggota:', e2);
+    }
 
     return success({
       total: tot, totalP: totP, hariIni: hr, hariIniP: hrP, totalAnggota,

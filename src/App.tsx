@@ -224,7 +224,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
   // In-memory mirror: fast synchronous read for components
-  const [memCache, setMemCache] = useState<MemCache>({});
+  const [, setMemCache] = useState<MemCache>({});
   // Ref so callbacks close over latest value without re-creating
   const memCacheRef = useRef<MemCache>({});
   // Ref untuk polling interval — hindari leak saat re-mount

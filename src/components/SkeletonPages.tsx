@@ -67,10 +67,11 @@ export const DashboardSkeleton: React.FC = () => (
       </div>
     </div>
 
-    {/* Metrics Summary Cards (5 cards) */}
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-      {[...Array(5)].map((_, i) => (
-        <div key={i} className={`${SCARD}${i === 4 ? ' col-span-2 lg:col-span-1' : ''}`}>
+    {/* Metrics Summary Cards — 4 kartu (Total Laporan, Pelanggaran, Bulan Ini, Total Anggota) */}
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className={SCARD}>
+          <span className={SCARD_BAR} />
           <div className={SICO}><Sk className="h-4 w-4 rounded-full" /></div>
           <div className={SCARD_TEXT}>
             <Sk className="h-7 w-12 mb-1.5" />
@@ -80,10 +81,11 @@ export const DashboardSkeleton: React.FC = () => (
       ))}
     </div>
 
-    {/* Aduan Summary Cards (5 cards) */}
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
-      {[...Array(5)].map((_, i) => (
-        <div key={i} className={`${SCARD}${i === 4 ? ' col-span-2 lg:col-span-1' : ''}`}>
+    {/* Aduan Summary Cards — 4 kartu (Total, Baru, Diproses, Selesai) */}
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className={SCARD}>
+          <span className={SCARD_BAR} />
           <div className={SICO}><Sk className="h-4 w-4 rounded-full" /></div>
           <div className={SCARD_TEXT}>
             <Sk className="h-7 w-12 mb-1.5" />
@@ -175,7 +177,7 @@ export const RekapSkeleton: React.FC = () => (
           <tbody>
             {[...Array(6)].map((_, i) => (
               <tr key={i} className={TR_HOVER}>
-                {[5, 10, 10, 15, 20, 15, 10, 5, 10].map((w, j) => (
+                {[5, 10, 10, 15, 20, 15, 10, 5, 10].map((_w, j) => (
                   <td key={j} className={TD}><Sk className="h-3 w-full rounded" /></td>
                 ))}
               </tr>
@@ -340,7 +342,7 @@ export const AduanSkeleton: React.FC = () => (
           <tbody>
             {[...Array(6)].map((_, i) => (
               <tr key={i} className={TR_HOVER}>
-                {[5, 15, 15, 15, 10, 15, 10, 5, 10].map((w, j) => (
+                {[5, 15, 15, 15, 10, 15, 10, 5, 10].map((_w, j) => (
                   <td key={j} className={TD_SP}><Sk className="h-3 w-full rounded" /></td>
                 ))}
               </tr>
@@ -377,77 +379,70 @@ export const AduanSkeleton: React.FC = () => (
   </div>
 );
 
-/* ─── 7. SURVEI ─────────────────────────────────────── */
+/* ─── 7. RATING LAYANAN ─────────────────────────────── */
 export const SurveiSkeleton: React.FC = () => (
   <div className={FU}>
-    {/* Summary Metrics Cards */}
-    <div className="mb-3 grid grid-cols-2 lg:grid-cols-4 gap-3">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className={SCARD}>
-          <span className={SCARD_BAR} />
-          <div className={SICO_CB}><Sk className="h-4 w-4 rounded-full" /></div>
-          <div className={SCARD_TEXT}>
-            <Sk className="h-6 w-12 mb-1" />
-            <Sk className="h-3 w-20" />
+    {/* Ringkasan — Total Rating · Rata-rata Bintang · Masukan Terisi */}
+    <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
+      {[...Array(3)].map((_, i) => (
+        <div key={i} className="rounded-2xl border border-[var(--border)] bg-card px-4 py-[14px] shadow-[var(--sh)]">
+          <div className="mb-1.5 flex h-10 w-10 items-center justify-center rounded-xl bg-bluelo shadow-[var(--sh-inner)]">
+            <Sk className="h-5 w-5 rounded-full" />
           </div>
+          <Sk className="h-8 w-14 mb-1.5" />
+          <Sk className="h-2.5 w-24" />
         </div>
       ))}
     </div>
 
-    {/* Charts Layout */}
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-6 mb-3 lg:mb-6">
-      <div className={`${PANEL} mb-3 flex flex-col h-[380px]`}>
-        <div className={PHD}><Sk className="h-4 w-40" /></div>
-        <div className="p-4 flex-1 flex items-center justify-center"><Sk className="h-60 w-60 rounded-full" /></div>
-      </div>
-      <div className={`${PANEL} mb-3 flex flex-col h-[380px]`}>
-        <div className={PHD}><Sk className="h-4 w-32" /></div>
-        <div className="p-4 flex-1 flex items-end gap-3"><Sk className="h-10 w-full" /></div>
+    {/* Distribusi Rating — 5 baris bintang */}
+    <div className={`${PANEL} mb-3`}>
+      <div className={PHD}><Sk className="h-4 w-36" /></div>
+      <div className="flex flex-col gap-3 px-4 py-4">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <div className="flex w-[104px] shrink-0 flex-col items-end gap-1">
+              <Sk className="h-3 w-12" />
+              <Sk className="h-2 w-16" />
+            </div>
+            <Sk className="h-2.5 flex-1 rounded-full" />
+            <Sk className="h-3 w-14 shrink-0" />
+          </div>
+        ))}
       </div>
     </div>
 
-    {/* Ratings & Feedback Grid */}
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 lg:gap-6">
-      {/* Rincian Skor */}
-      <div className={`${PANEL} mb-3 lg:col-span-1 flex flex-col`}>
-        <div className={PHD}><Sk className="h-4 w-24" /></div>
-        <div className="flex-1 p-4 flex flex-col gap-4">
-          {[...Array(7)].map((_, i) => (
-            <div key={i} className="flex justify-between items-center pb-4 border-b border-slate-800/40 last:border-none last:pb-0">
-              <div className="flex items-center gap-3">
-                <Sk className="h-8 w-8 rounded-lg" />
-                <div className="flex flex-col gap-1"><Sk className="h-3 w-24" /><Sk className="h-2 w-12" /></div>
-              </div>
-              <Sk className="h-4 w-8" />
-            </div>
-          ))}
-        </div>
+    {/* Tabel Rating Masyarakat */}
+    <div className={PANEL}>
+      <div className={PHD}>
+        <Sk className="h-4 w-40" />
+        <Sk className="h-3 w-32" />
       </div>
-
-      {/* Saran & Masukan Warga */}
-      <div className={`${PANEL} mb-3 lg:col-span-2 flex flex-col`}>
-        <div className={PHD}><Sk className="h-4 w-32" /></div>
-        <div className="flex-1 flex flex-col divide-y divide-slate-800/50">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="p-4 flex flex-col gap-3">
-              <div className="flex justify-between items-center">
-                <div className="flex gap-2"><Sk className="h-4 w-16" /><Sk className="h-4 w-12" /><Sk className="h-3 w-16" /></div>
-                <Sk className="h-3 w-16" />
-              </div>
-              <Sk className="h-3 w-full" />
-            </div>
-          ))}
-        </div>
+      <div className={RTBL_WRAP}>
+        <table className={DTBL}>
+          <thead>
+            <tr>
+              {[5, 12, 14, 14, 12, 43].map((w, i) => (
+                <th key={i} className={TH} style={{ width: `${w}%` }}><Sk className="h-3 w-full rounded" /></th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[...Array(8)].map((_, i) => (
+              <tr key={i} className={TR_HOVER}>
+                {[5, 12, 14, 14, 12, 43].map((_w, j) => (
+                  <td key={j} className={TD_SP}><Sk className="h-3 w-full rounded" /></td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-    </div>
-
-    {/* Data Responden Table */}
-    <div className={`${PANEL} mb-3 mt-3 lg:mt-6`}>
-      <div className={PHD}><Sk className="h-4 w-28" /></div>
-      <div className="p-4 flex flex-col gap-3">
-        <Sk className="h-8 w-full rounded" />
-        <Sk className="h-8 w-full rounded" />
-        <Sk className="h-8 w-full rounded" />
+      <div className="flex flex-wrap items-center justify-between gap-[7px] border-t border-[var(--border)] p-[14px]">
+        <Sk className="h-3 w-40" />
+        <div className="flex gap-[3px]">
+          {[...Array(4)].map((_, i) => <Sk key={i} className="h-7 w-7 rounded-md" />)}
+        </div>
       </div>
     </div>
   </div>
