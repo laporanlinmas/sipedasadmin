@@ -1,4 +1,4 @@
-import { Star, MessageSquare, Calendar, Briefcase, Inbox } from 'lucide-react';
+import { Star, MessageSquare, Calendar, Briefcase, Inbox, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import React, { useState, useEffect, useMemo } from 'react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, collection, onSnapshot } from 'firebase/firestore';
@@ -147,8 +147,13 @@ export const Survei: React.FC = () => {
     if (totalPages <= 1) return null;
     const btns: React.ReactNode[] = [];
     btns.push(
+      <button key="first" className={PBN} disabled={currentPage <= 1} onClick={() => setCurrentPage(1)} aria-label="Halaman pertama" title="Halaman pertama">
+        <ChevronsLeft className="h-4 w-4" />
+      </button>,
+    );
+    btns.push(
       <button key="prev" className={PBN} disabled={currentPage <= 1} onClick={() => setCurrentPage(currentPage - 1)}>
-        ‹
+        <ChevronLeft className="h-4 w-4" />
       </button>,
     );
     for (let p = Math.max(1, currentPage - 2); p <= Math.min(totalPages, currentPage + 2); p++) {
@@ -158,7 +163,12 @@ export const Survei: React.FC = () => {
     }
     btns.push(
       <button key="next" className={PBN} disabled={currentPage >= totalPages} onClick={() => setCurrentPage(currentPage + 1)}>
-        ›
+        <ChevronRight className="h-4 w-4" />
+      </button>,
+    );
+    btns.push(
+      <button key="last" className={PBN} disabled={currentPage >= totalPages} onClick={() => setCurrentPage(totalPages)} aria-label="Halaman terakhir" title="Halaman terakhir">
+        <ChevronsRight className="h-4 w-4" />
       </button>,
     );
     return <div className="flex gap-[3px]">{btns}</div>;
@@ -317,7 +327,7 @@ export const Survei: React.FC = () => {
           )}
         </div>
 
-        <div className={PGW}>
+        <div className={`${PGW} print:hidden`}>
           <span>{total === 0 ? 'Tidak ada data' : `Menampilkan ${startIndex + 1}–${endIndex} dari ${total} rating`}</span>
           {renderPagination()}
         </div>

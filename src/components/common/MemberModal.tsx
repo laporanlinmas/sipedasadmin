@@ -5,6 +5,7 @@ import { apiPost } from '../../services/api';
 import { useApp } from '../../App';
 import { Modal } from './Modal';
 import { CustomDropdown } from './CustomDropdown';
+import { AnchoredPopover } from './AnchoredPopover';
 
 /* ── Canonical Tailwind class sets (konversi dari styles/*.css) ── */
 const FLBL = 'mb-1 block text-[.62rem] font-extrabold uppercase tracking-[.07em] text-mid';
@@ -24,14 +25,19 @@ const BTN_BG2_SM =
   'inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-[.68rem] font-semibold text-mid transition-all duration-200 hover:-translate-y-px hover:border-bdark hover:bg-bg hover:text-text';
 const BTN_BP_SM =
   'inline-flex items-center gap-1.5 rounded-lg bg-blue px-3 py-1.5 text-[.68rem] font-bold text-white transition-all duration-200 hover:bg-blueh hover:-translate-y-px active:translate-y-0';
+const MEMBER_CALENDAR_MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const MEMBER_CALENDAR_YEARS = Array.from({ length: new Date().getFullYear() - 1939 }, (_, index) => new Date().getFullYear() - index);
+const MEMBER_MONTH_OPTIONS = MEMBER_CALENDAR_MONTHS.map((label, value) => ({ value, label }));
+const MEMBER_YEAR_OPTIONS = MEMBER_CALENDAR_YEARS.map((value) => ({ value, label: String(value) }));
 
 interface CalendarModalProps {
   currentValue: string;
+  anchorEl: HTMLElement | null;
   onSelect: (dateStr: string) => void;
   onClose: () => void;
 }
 
-const CalendarModal: React.FC<CalendarModalProps> = ({ currentValue, onSelect, onClose }) => {
+const CalendarModal: React.FC<CalendarModalProps> = ({ currentValue, anchorEl, onSelect, onClose }) => {
   const initialDate = currentValue ? new Date(currentValue) : new Date();
   const validInitial = !isNaN(initialDate.getTime());
   const initialYear = validInitial ? initialDate.getFullYear() : 1990;
@@ -41,14 +47,6 @@ const CalendarModal: React.FC<CalendarModalProps> = ({ currentValue, onSelect, o
   const [year, setYear] = useState(initialYear);
   const [month, setMonth] = useState(initialMonth);
   const [selectedDay, setSelectedDay] = useState(validInitial ? initialDay : null);
-
-  const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-  
-  const years = [];
-  const currentYear = new Date().getFullYear();
-  for (let y = currentYear; y >= 1940; y--) {
-    years.push(y);
-  }
 
   const getDaysInMonth = (y: number, m: number) => {
     return new Date(y, m + 1, 0).getDate();
@@ -78,14 +76,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({ currentValue, onSelect, o
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[999999] flex items-center justify-center bg-[rgba(0,0,0,0.6)] print:hidden"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-[320px] rounded-2xl border border-border bg-card p-5 text-text shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnchoredPopover anchorEl={anchorEl} onClose={onClose} className="max-w-[320px] p-5 text-text">
         <div className="mb-3 flex items-center justify-between">
           <span className="text-[.85rem] font-bold text-blue">Pilih Tanggal Lahir</span>
           <button
@@ -101,13 +92,13 @@ const CalendarModal: React.FC<CalendarModalProps> = ({ currentValue, onSelect, o
             className="flex-[1.3]"
             value={month}
             onChange={(v) => setMonth(Number(v))}
-            options={months.map((mName, idx) => ({ value: idx, label: mName }))}
+            options={MEMBER_MONTH_OPTIONS}
           />
           <CustomDropdown
             className="flex-1"
             value={year}
             onChange={(v) => setYear(Number(v))}
-            options={years.map((yVal) => ({ value: yVal, label: String(yVal) }))}
+            options={MEMBER_YEAR_OPTIONS}
           />
         </div>
 
@@ -165,8 +156,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({ currentValue, onSelect, o
             Tutup
           </button>
         </div>
-      </div>
-    </div>
+    </AnchoredPopover>
   );
 };
 
@@ -193,6 +183,14 @@ export const MemberModal: React.FC<MemberModalProps> = ({
   const [wa, setWa] = useState('');
   const [usiaPreview, setUsiaPreview] = useState<number | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!show) {
+      setShowCalendar(false);
+      setCalendarAnchor(null);
+    }
+  }, [show]);
 
   useEffect(() => {
     if (member) {
@@ -328,7 +326,9 @@ export const MemberModal: React.FC<MemberModalProps> = ({
               onFocus={(e) => e.target.blur()}
               className="box-border min-h-[38px] w-full cursor-pointer rounded-[10px] border border-border bg-card px-3 py-2 text-[.82rem] text-text transition-all duration-200 outline-none focus:border-blue focus:shadow-[0_0_0_3px_var(--bluelo)]"
               value={parseAndFormatDate(tglLahir)}
-              onClick={() => setShowCalendar(true)}
+              onClick={(e) => { setCalendarAnchor(e.currentTarget); setShowCalendar((open) => !open); }}
+              aria-haspopup="dialog"
+              aria-expanded={showCalendar}
               placeholder="Pilih tanggal lahir..."
             />
             <div
@@ -370,6 +370,7 @@ export const MemberModal: React.FC<MemberModalProps> = ({
       {showCalendar && (
         <CalendarModal
           currentValue={tglLahir}
+          anchorEl={calendarAnchor}
           onSelect={(dateStr) => setTglLahir(dateStr)}
           onClose={() => setShowCalendar(false)}
         />

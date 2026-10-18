@@ -1,4 +1,4 @@
-import { Printer, Edit, Trash2, FileText, Eye, ClipboardList, Image, AlertTriangle, Info, RefreshCw, ChevronLeft, ChevronRight, Loader2, Search, RotateCcw, Calendar, Hash, MapPin, Shield, User, Inbox, Users, Clock, PenTool, Download, FileDown, Tag, Map } from 'lucide-react';
+import { Printer, Edit, Trash2, FileText, Eye, ClipboardList, Image, AlertTriangle, Info, RefreshCw, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, Search, RotateCcw, Calendar, Hash, MapPin, Shield, User, Inbox, Users, Clock, PenTool, Download, FileDown, Tag, Map } from 'lucide-react';
 import React, { useState, useEffect, useCallback } from 'react';
 
 import { Laporan, Settings } from '../types';
@@ -273,6 +273,8 @@ export const RekapLaporan: React.FC<RekapLaporanProps> = ({ kategori }) => {
   const [dateTo, setDateTo] = useState('');
   const [showCalendarFrom, setShowCalendarFrom] = useState(false);
   const [showCalendarTo, setShowCalendarTo] = useState(false);
+  const [calendarAnchorFrom, setCalendarAnchorFrom] = useState<HTMLElement | null>(null);
+  const [calendarAnchorTo, setCalendarAnchorTo] = useState<HTMLElement | null>(null);
 
   const formatIndoDisplay = (ymdStr: string) => {
     if (!ymdStr) return '';
@@ -541,6 +543,12 @@ export const RekapLaporan: React.FC<RekapLaporanProps> = ({ kategori }) => {
     const nextDisabled = currentPage >= totalPages;
 
     btns.push(
+      <button key="first" className={PBN} disabled={prevDisabled} onClick={() => setCurrentPage(1)} aria-label="Halaman pertama" title="Halaman pertama">
+        <ChevronsLeft className="w-4 h-4" />
+      </button>
+    );
+
+    btns.push(
       <button
         key="prev"
         className={PBN}
@@ -574,6 +582,12 @@ export const RekapLaporan: React.FC<RekapLaporanProps> = ({ kategori }) => {
         onClick={() => setCurrentPage(currentPage + 1)}
       >
         <ChevronRight className="w-4 h-4 inline-block align-middle" />
+      </button>
+    );
+
+    btns.push(
+      <button key="last" className={PBN} disabled={nextDisabled} onClick={() => setCurrentPage(totalPages)} aria-label="Halaman terakhir" title="Halaman terakhir">
+        <ChevronsRight className="w-4 h-4" />
       </button>
     );
 
@@ -1227,7 +1241,9 @@ export const RekapLaporan: React.FC<RekapLaporanProps> = ({ kategori }) => {
                   onFocus={(e) => e.target.blur()}
                   placeholder="Pilih tanggal..."
                   value={formatIndoDisplay(dateFrom)}
-                  onClick={() => setShowCalendarFrom(true)}
+                  onClick={(e) => { setCalendarAnchorFrom(e.currentTarget); setShowCalendarFrom((open) => !open); }}
+                  aria-haspopup="dialog"
+                  aria-expanded={showCalendarFrom}
                 />
               </div>
               <div className="flex flex-1 items-center gap-1">
@@ -1240,7 +1256,9 @@ export const RekapLaporan: React.FC<RekapLaporanProps> = ({ kategori }) => {
                   onFocus={(e) => e.target.blur()}
                   placeholder="Pilih tanggal..."
                   value={formatIndoDisplay(dateTo)}
-                  onClick={() => setShowCalendarTo(true)}
+                  onClick={(e) => { setCalendarAnchorTo(e.currentTarget); setShowCalendarTo((open) => !open); }}
+                  aria-haspopup="dialog"
+                  aria-expanded={showCalendarTo}
                 />
               </div>
             </div>
@@ -1485,7 +1503,7 @@ export const RekapLaporan: React.FC<RekapLaporanProps> = ({ kategori }) => {
         </div>
 
         {/* Pagination Controls */}
-        <div className={PGW} id="r-pgw">
+        <div className={`${PGW} print:hidden`} id="r-pgw">
           <span>
             {totalItems === 0
               ? 'Tidak ada data'
@@ -2159,12 +2177,14 @@ export const RekapLaporan: React.FC<RekapLaporanProps> = ({ kategori }) => {
 
       <CalendarModal
         show={showCalendarFrom}
+        anchorEl={calendarAnchorFrom}
         onClose={() => setShowCalendarFrom(false)}
         onSelect={(_, __, date) => setDateFrom(formatYmd(date))}
       />
 
       <CalendarModal
         show={showCalendarTo}
+        anchorEl={calendarAnchorTo}
         onClose={() => setShowCalendarTo(false)}
         onSelect={(_, __, date) => setDateTo(formatYmd(date))}
       />

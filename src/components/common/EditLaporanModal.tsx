@@ -70,6 +70,7 @@ export const EditLaporanModal: React.FC<EditLaporanModalProps> = ({
   const [keterangan, setKeterangan] = useState('');
   const [fotos, setFotos] = useState<EditFoto[]>([]);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(null);
 
   /* ── Drag-and-drop state ────────────────────────────────────── */
   const dragIndexRef = useRef<number | null>(null);
@@ -333,7 +334,9 @@ export const EditLaporanModal: React.FC<EditLaporanModalProps> = ({
                 readOnly
                 value={tanggal}
                 onFocus={(e) => e.target.blur()}
-                onClick={() => setShowCalendar(true)}
+                onClick={(e) => { setCalendarAnchor(e.currentTarget); setShowCalendar((open) => !open); }}
+                aria-haspopup="dialog"
+                aria-expanded={showCalendar}
                 placeholder="Pilih Tanggal"
               />
             </div>
@@ -361,7 +364,9 @@ export const EditLaporanModal: React.FC<EditLaporanModalProps> = ({
                 readOnly
                 value={tanggal}
                 onFocus={(e) => e.target.blur()}
-                onClick={() => setShowCalendar(true)}
+                onClick={(e) => { setCalendarAnchor(e.currentTarget); setShowCalendar((open) => !open); }}
+                aria-haspopup="dialog"
+                aria-expanded={showCalendar}
                 placeholder="Pilih Tanggal"
               />
             </div>
@@ -564,6 +569,7 @@ export const EditLaporanModal: React.FC<EditLaporanModalProps> = ({
       {/* Calendar picker */}
       <CalendarModal
         show={showCalendar}
+        anchorEl={calendarAnchor}
         onClose={() => setShowCalendar(false)}
         onSelect={(dateStr, dayStr) => {
           setTanggal(dateStr);

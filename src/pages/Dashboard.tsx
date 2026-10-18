@@ -207,6 +207,7 @@ export const Dashboard: React.FC = () => {
     const gridColor = isDarkMode ? 'rgba(255,255,255,.05)' : 'rgba(0,0,0,.05)';
     Chart.defaults.color = textColor;
     if (Chart.defaults.scales?.linear) {
+      if (!Chart.defaults.scales.linear.grid) Chart.defaults.scales.linear.grid = {};
       Chart.defaults.scales.linear.grid.color = gridColor;
     }
     if (Chart.defaults.scale?.grid) {

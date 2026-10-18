@@ -1,31 +1,30 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CustomDropdown } from './CustomDropdown';
+import { AnchoredPopover } from './AnchoredPopover';
 
 interface CalendarModalProps {
   show: boolean;
+  anchorEl: HTMLElement | null;
   onClose: () => void;
   onSelect: (dateStr: string, dayStr: string, rawDate: Date) => void;
 }
 
-export const CalendarModal: React.FC<CalendarModalProps> = ({ show, onClose, onSelect }) => {
+const INDO_DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const INDO_MONTHS = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+const CALENDAR_YEARS = Array.from({ length: 81 }, (_, index) => 2030 - index);
+const MONTH_OPTIONS = INDO_MONTHS.map((label, value) => ({ value, label }));
+const YEAR_OPTIONS = CALENDAR_YEARS.map((value) => ({ value, label: String(value) }));
+
+export const CalendarModal: React.FC<CalendarModalProps> = ({ show, anchorEl, onClose, onSelect }) => {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
 
-  if (!show) return null;
-
-  const INDO_DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  const INDO_MONTHS = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-  ];
-
-  // Generate range of years (1950 to 2030) - covers birth years to current
-  const years = [];
-  for (let y = 2030; y >= 1950; y--) {
-    years.push(y);
-  }
+  if (!show || !anchorEl) return null;
 
   const firstDayOfMonth = new Date(year, month, 1);
   let startDayIndex = firstDayOfMonth.getDay();
@@ -90,13 +89,12 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({ show, onClose, onS
   };
 
   return (
-    <div className="mov on flex fixed inset-0 z-[99900] items-center justify-center overflow-y-auto overscroll-contain bg-[rgba(6,16,32,.52)] p-3.5 backdrop-blur-[3px] portrait:max-md:p-3" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="max-w-[360px] w-[92vw] max-h-[92vh] overflow-y-auto rounded-[var(--r)] border border-border bg-card p-4 shadow-[var(--shl)] animate-modal-in overscroll-contain portrait:max-md:mx-auto portrait:max-md:max-h-[88vh] portrait:max-md:w-[calc(100vw-20px)] portrait:max-md:max-w-[calc(100vw-20px)]">
-        <div className="sticky top-0 z-[2] flex items-center justify-between rounded-t-[var(--r)] border-b border-border bg-card px-[18px] pt-3.5 pb-3">
-          <h5 className="flex items-center gap-[7px] text-[1rem] font-bold">Pilih Tanggal</h5>
-          <button className="border-none bg-transparent px-[3px] text-[1.2rem] leading-none text-muted" onClick={onClose} aria-label="Tutup">&times;</button>
+    <AnchoredPopover anchorEl={anchorEl} onClose={onClose}>
+        <div className="mb-3 flex items-center justify-between border-b border-border pb-2">
+          <h5 className="flex items-center gap-[7px] text-[.9rem] font-bold">Pilih Tanggal</h5>
+          <button type="button" className="border-none bg-transparent px-[3px] text-[1.2rem] leading-none text-muted" onClick={onClose} aria-label="Tutup">&times;</button>
         </div>
-        <div className="p-0">
+        <div>
           {/* Calendar Header with Dropdowns and Chevron Buttons */}
           <div className="mb-[14px] flex items-center gap-2">
             <button className="inline-flex h-[26px] w-[26px] shrink-0 cursor-pointer items-center justify-center rounded-[7px] border border-transparent p-1.5 text-[.68rem] transition-all hover:-translate-y-1 hover:brightness-[.88] hover:shadow-[0_3px_8px_rgba(0,0,0,.12)]" onClick={handlePrevMonth} type="button">
@@ -107,14 +105,14 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({ show, onClose, onS
               className="flex-[1.3] text-[.75rem]"
               value={month}
               onChange={(v) => setMonth(Number(v))}
-              options={INDO_MONTHS.map((mName, idx) => ({ value: idx, label: mName }))}
+              options={MONTH_OPTIONS}
             />
 
             <CustomDropdown
               className="flex-1 text-[.75rem]"
               value={year}
               onChange={(v) => setYear(Number(v))}
-              options={years.map((yVal) => ({ value: yVal, label: String(yVal) }))}
+              options={YEAR_OPTIONS}
               dropdownMaxHeight="200px"
             />
 
@@ -165,7 +163,6 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({ show, onClose, onS
             })}
           </div>
         </div>
-      </div>
-    </div>
+    </AnchoredPopover>
   );
 };

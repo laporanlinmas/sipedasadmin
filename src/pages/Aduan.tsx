@@ -1,4 +1,4 @@
-import { CheckCircle, MessageSquare, Edit, Clock, Camera, ChevronLeft, ChevronRight, AlertTriangle, Inbox, Mail, Search, RotateCcw, Calendar, MapPin, Reply, Image, Globe, Bot, Tag, User } from 'lucide-react';
+import { CheckCircle, MessageSquare, Edit, Clock, Camera, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, AlertTriangle, Inbox, Mail, Search, RotateCcw, Calendar, MapPin, Reply, Image, Globe, Bot, Tag, User } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 
 const getAduanMetaIcon = (ico: string, className = "w-3 h-3 inline-block mr-1 align-text-bottom", color?: string) => {
@@ -335,6 +335,12 @@ export const Aduan: React.FC = () => {
     const nextDisabled = currentPage >= totalPages;
 
     btns.push(
+      <button key="first" className={PBN} disabled={prevDisabled} onClick={() => setCurrentPage(1)} aria-label="Halaman pertama" title="Halaman pertama">
+        <ChevronsLeft className="w-4 h-4" />
+      </button>
+    );
+
+    btns.push(
       <button
         key="prev"
         className={PBN}
@@ -368,6 +374,12 @@ export const Aduan: React.FC = () => {
         onClick={() => setCurrentPage(currentPage + 1)}
       >
         <ChevronRight className="w-4 h-4 inline-block align-middle" />
+      </button>
+    );
+
+    btns.push(
+      <button key="last" className={PBN} disabled={nextDisabled} onClick={() => setCurrentPage(totalPages)} aria-label="Halaman terakhir" title="Halaman terakhir">
+        <ChevronsRight className="w-4 h-4" />
       </button>
     );
 
@@ -613,7 +625,7 @@ export const Aduan: React.FC = () => {
         </div>
 
         {/* Pagination Info */}
-        <div className={PGW}>
+        <div className={`${PGW} print:hidden`}>
           <span>
             {totalItems === 0
               ? 'Tidak ada data'

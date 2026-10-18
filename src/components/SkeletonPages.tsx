@@ -250,11 +250,12 @@ export const SatlinmasSkeleton: React.FC = () => (
 
 /* ─── 4. INPUT LAPORAN ─────────────────────────────── */
 export const InputSkeleton: React.FC = () => (
-  /* Satu kotak besar yang mengisi area iframe. sengaja TIDAK memakai
-     blok-blok kecil seperti form, supaya transisi ke aplikasi di dalam
-     frame terasa mulus dan tidak terlihat "kotak-kotak". */
-  <div className="h-full min-h-[320px] w-full overflow-hidden rounded-xl border border-[var(--border)] bg-card">
-    <div className="skeleton h-full w-full rounded-xl" />
+  <div className="flex h-full min-h-[320px] w-full items-center justify-center gap-3 overflow-hidden rounded-xl border border-[var(--border)] bg-card" role="status" aria-live="polite">
+    <div className="relative h-11 w-11">
+      <div className="h-11 w-11 animate-spin-custom rounded-full border-[3px] border-[var(--border)] border-t-blue" />
+      <div className="absolute inset-[9px] animate-spin-reverse rounded-full border-2 border-[var(--border)] border-b-gold" />
+    </div>
+    <span className="text-xs font-semibold text-mid">Memuat Formulir Laporan...</span>
   </div>
 );
 

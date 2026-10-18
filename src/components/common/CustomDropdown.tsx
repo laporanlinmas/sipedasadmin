@@ -25,6 +25,8 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
 
   // Close dropdown when clicking outside
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -32,7 +34,7 @@ export const CustomDropdown: React.FC<CustomDropdownProps> = ({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isOpen]);
 
   const selectedOption = options.find((opt) => opt.value === value);
 

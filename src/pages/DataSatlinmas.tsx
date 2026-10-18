@@ -8,7 +8,7 @@ import { MemberModal } from '../components/common/MemberModal';
 import { ConfirmModal } from '../components/common/ConfirmModal';
 import { SatlinmasSkeleton } from '../components/SkeletonPages';
 import { CustomDropdown } from '../components/common/CustomDropdown';
-import { UserPlus, Search, RotateCcw, Edit2, Trash2, FolderOpen } from 'lucide-react';
+import { UserPlus, Search, RotateCcw, Edit2, Trash2, FolderOpen, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 24;
 
@@ -130,13 +130,24 @@ export const DataSatlinmas: React.FC = () => {
   const renderPagination = () => {
     if (totalPages <= 1) return null;
     return (
-      <div className="mt-[15px] flex justify-center gap-[5px]">
+      <div className="mt-[15px] flex justify-center gap-[5px] print:hidden">
+        <button
+          disabled={currentPage <= 1}
+          onClick={() => setCurrentPage(1)}
+          aria-label="Halaman pertama"
+          title="Halaman pertama"
+          className="inline-flex items-center justify-center rounded-md bg-blue p-1.5 text-white transition-all duration-200 hover:bg-blueh disabled:opacity-40"
+        >
+          <ChevronsLeft className="h-4 w-4" />
+        </button>
         <button
           disabled={currentPage <= 1}
           onClick={() => setCurrentPage(prev => prev - 1)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-blue px-3 py-1.5 text-[.74rem] font-bold text-white transition-all duration-200 hover:bg-blueh hover:-translate-y-px active:translate-y-0"
+          aria-label="Halaman sebelumnya"
+          title="Halaman sebelumnya"
+          className="inline-flex items-center justify-center rounded-md bg-blue p-1.5 text-white transition-all duration-200 hover:bg-blueh disabled:opacity-40"
         >
-          &laquo;
+          <ChevronLeft className="h-4 w-4" />
         </button>
         {Array.from({ length: totalPages }, (_, i) => i + 1)
           .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
@@ -154,9 +165,20 @@ export const DataSatlinmas: React.FC = () => {
         <button
           disabled={currentPage >= totalPages}
           onClick={() => setCurrentPage(prev => prev + 1)}
-          className="inline-flex items-center gap-1.5 rounded-md bg-blue px-3 py-1.5 text-[.74rem] font-bold text-white transition-all duration-200 hover:bg-blueh hover:-translate-y-px active:translate-y-0"
+          aria-label="Halaman berikutnya"
+          title="Halaman berikutnya"
+          className="inline-flex items-center justify-center rounded-md bg-blue p-1.5 text-white transition-all duration-200 hover:bg-blueh disabled:opacity-40"
         >
-          &raquo;
+          <ChevronRight className="h-4 w-4" />
+        </button>
+        <button
+          disabled={currentPage >= totalPages}
+          onClick={() => setCurrentPage(totalPages)}
+          aria-label="Halaman terakhir"
+          title="Halaman terakhir"
+          className="inline-flex items-center justify-center rounded-md bg-blue p-1.5 text-white transition-all duration-200 hover:bg-blueh disabled:opacity-40"
+        >
+          <ChevronsRight className="h-4 w-4" />
         </button>
       </div>
     );

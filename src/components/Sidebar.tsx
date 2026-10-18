@@ -152,12 +152,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, setIsOpenMobile,
                     ? 'bg-white/[.06] font-semibold text-white'
                     : 'font-semibold text-white/75 hover:bg-white/10 hover:text-white',
               ].join(' ')}
-              onClick={() => {
-                setKatOpen(!katOpen);
-                if (!isRekapActive) {
-                  navKategori('pedestrian');
-                }
-              }}
+              onClick={() => setKatOpen((open) => !open)}
+              aria-expanded={katOpen}
+              aria-controls="rekap-submenu"
               title={collapse ? 'Rekap Laporan' : undefined}
             >
               <span
@@ -181,6 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpenMobile, setIsOpenMobile,
 
             {/* Tinggi cabang dianimasikan lewat trik grid-rows (1fr ↔ 0fr) */}
             <div
+              id="rekap-submenu"
               className={`grid transition-all duration-300 ease-in-out ${
                 katOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
               }`}

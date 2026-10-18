@@ -1,4 +1,4 @@
-import { Trash2, RotateCcw, AlertTriangle, Calendar, MapPin, Clock, Loader2, Inbox, Image, FileText, Search, RefreshCw } from 'lucide-react';
+import { Trash2, RotateCcw, AlertTriangle, Calendar, MapPin, Clock, Loader2, Inbox, Image, FileText, Search, RefreshCw, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useApp, useAuth } from '../App';
 import { apiGet, apiPost } from '../services/api';
@@ -240,8 +240,14 @@ export const Sampah: React.FC = () => {
     const nextDisabled = currentPage >= totalPages;
 
     btns.push(
+      <button key="first" className={PBN} disabled={prevDisabled} onClick={() => setCurrentPage(1)} aria-label="Halaman pertama" title="Halaman pertama">
+        <ChevronsLeft className="h-4 w-4" />
+      </button>
+    );
+
+    btns.push(
       <button key="prev" className={PBN} disabled={prevDisabled} onClick={() => setCurrentPage(currentPage - 1)}>
-        ‹
+        <ChevronLeft className="h-4 w-4" />
       </button>
     );
 
@@ -258,7 +264,13 @@ export const Sampah: React.FC = () => {
 
     btns.push(
       <button key="next" className={PBN} disabled={nextDisabled} onClick={() => setCurrentPage(currentPage + 1)}>
-        ›
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    );
+
+    btns.push(
+      <button key="last" className={PBN} disabled={nextDisabled} onClick={() => setCurrentPage(totalPages)} aria-label="Halaman terakhir" title="Halaman terakhir">
+        <ChevronsRight className="h-4 w-4" />
       </button>
     );
 
@@ -461,7 +473,7 @@ export const Sampah: React.FC = () => {
         </div>
 
         {/* Pagination */}
-        <div className={PGW}>
+        <div className={`${PGW} print:hidden`}>
           <span>
             {totalItems === 0
               ? 'Tidak ada data'
