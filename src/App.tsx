@@ -15,6 +15,8 @@ import { LogOut } from 'lucide-react';
 interface ThemeContextType {
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  /** Setel tema secara langsung (dipakai saat frame anak mengubah tema). */
+  setDarkMode: (dark: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -75,8 +77,22 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
+  /** Setel tema tanpa tombol — dipakai saat frame anak (mis. CCTV) mengubah
+   *  temanya sendiri, supaya dashboard ikut berubah (sinkron dua arah). */
+  const setDarkMode = (dark: boolean) => {
+    setIsDarkMode((prev) => {
+      if (prev === dark) return prev;
+      try {
+        localStorage.setItem(DM_KEY, dark ? 'dark' : 'light');
+      } catch (e) {
+        // Ignore
+      }
+      return dark;
+    });
+  };
+
   return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
+    <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode, setDarkMode }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -21,7 +21,10 @@ function loadEnv() {
     if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
       val = val.slice(1, -1);
     }
-    process.env[key] = val;
+    // Variabel yang sudah ada di environment (shell / Vercel) menang —
+    // file .env hanya mengisi kekosongan. Ini juga membuat pengujian
+    // lokal mudah: `CCTV_URL=... npm run dev`.
+    if (process.env[key] === undefined) process.env[key] = val;
   });
 }
 

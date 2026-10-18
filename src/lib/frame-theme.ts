@@ -32,18 +32,48 @@ export function withThemeParam(url: string, theme: FrameThemeMode): string {
 }
 
 /**
+ * Tandai URL sebagai "dipasang di dashboard" (`?embed=1`).
+ *
+ * Aplikasi anak memakai sinyal ini untuk mempertahankan tata letak
+ * desktop di dalam iframe yang sempit: tanpa tombol hamburger dan tanpa
+ * blok brand di kiri atas (dashboard sudah punya navigasinya sendiri).
+ */
+export function withEmbedParam(url: string): string {
+  if (!url) return url;
+  try {
+    const u = new URL(url, window.location.origin);
+    u.searchParams.set('embed', '1');
+    return u.toString();
+  } catch {
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}embed=1`;
+  }
+}
+
+/**
  * Kirim tema ke dalam frame. Panggil ulang saat:
  *  - komponen mount,
  *  - tema dashboard berubah,
  *  - frame melaporkan "saya siap" (SIPEDAS_VIEWER_READY / sipedas:frame-ready).
  *
  * `ref` iframe dipakai; boleh `null` bila frame belum ada.
+ *
+ * `onThemeFromChild` dipakai untuk sinkron dua arah: bila pengguna
+ * mengubah tema di dalam aplikasi anak (mis. tombol tema pada
+ * SIPEDAS VIEW), dashboard ikut berubah.
  */
-export function useFrameThemeSync(frames: Array<React.RefObject<HTMLIFrameElement>>): FrameThemeMode {
+export function useFrameThemeSync(
+  frames: Array<React.RefObject<HTMLIFrameElement>>,
+  options?: { onThemeFromChild?: (theme: FrameThemeMode) => void }
+): FrameThemeMode {
   const { isDarkMode } = useTheme();
   const theme: FrameThemeMode = isDarkMode ? 'dark' : 'light';
   const themeRef = useRef<FrameThemeMode>(theme);
   themeRef.current = theme;
+
+  const onThemeFromChild = options?.onThemeFromChild;
+  const childCallbackRef = useRef(onThemeFromChild);
+  childCallbackRef.current = onThemeFromChild;
 
   useEffect(() => {
     const send = () => {
@@ -74,10 +104,21 @@ export function useFrameThemeSync(frames: Array<React.RefObject<HTMLIFrameElemen
       cleanups.push(() => el.removeEventListener('load', onLoad));
     }
 
-    // 3. Saat frame memberitahu dirinya siap.
+    // 3. Saat frame memberitahu dirinya siap — atau mengubah tema.
     const onMessage = (ev: MessageEvent) => {
-      const type = (ev?.data as { type?: string } | undefined)?.type;
-      if (type === 'SIPEDAS_VIEWER_READY' || type === 'sipedas:frame-ready') send();
+      const data = ev?.data as { type?: string; theme?: unknown } | undefined;
+      const type = data?.type;
+      if (type === 'SIPEDAS_VIEWER_READY' || type === 'sipedas:frame-ready') {
+        send();
+        return;
+      }
+      // Sinkron dua arah: tema baru dari aplikasi anak.
+      if (type === 'SIPEDAS_THEME_CHANGE') {
+        const next = data?.theme;
+        if (next === 'dark' || next === 'light') {
+          childCallbackRef.current?.(next);
+        }
+      }
     };
     window.addEventListener('message', onMessage);
     cleanups.push(() => window.removeEventListener('message', onMessage));
