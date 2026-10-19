@@ -281,7 +281,7 @@ export async function uploadFoto(data: any): Promise<any> {
   const tsStrS = formatTsSheets(waktuNow);
 
   // Simpan ke sheet Detail Foto (dynamic import untuk hindari circular dependency warning)
-  const { appendDetailFoto } = await import('./sheets-service');
+  const { appendDetailFoto } = await import('./sheets-service.js');
   await appendDetailFoto({
     tsStr    : tsStrS,
     tanggal  : parsed.tanggal || '-',

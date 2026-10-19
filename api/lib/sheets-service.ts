@@ -40,6 +40,14 @@ const CDF = { TS_UPLOAD: 0, TANGGAL: 1, DANRU: 2, NAMA_FILE: 3, SUMBER: 4, ADA_G
 const CLP = { ID: 0, NAMA: 1, SIMBOL: 2, WARNA: 3, LAT: 4, LNG: 5, KET: 6, AKTIF: 7 };
 const CGP = { ID: 0, TIPE: 1, WARNA: 2, NAMA: 3, KET: 4, MEASUREMENT: 5, GEOJSON: 6, TS: 7, USER: 8 };
 
+export function laporanIdentity(row: any): string {
+  return JSON.stringify([
+    row?.ts || '', row?.noSpt || '', row?.lokasi || '', row?.hari || '', row?.tanggal || '',
+    row?.identitas || '', row?.personil || '', row?.danru || '', row?.namaDanru || '', row?.keterangan || '',
+    Array.isArray(row?.fotos) ? row.fotos : [],
+  ]);
+}
+
 // ================================================================
 //  HELPERS
 // ================================================================
@@ -445,9 +453,10 @@ export async function checkLogin(username?: string, password?: string): Promise<
 //  6.2  DASHBOARD & REKAP
 // ================================================================
 
-export async function getDashboardData(): Promise<any> {
+export async function getDashboardData(excludedReports: string[] = []): Promise<any> {
   try {
-    const rows = await getAllInput();
+    const excluded = new Set(excludedReports);
+    const rows = (await getAllInput()).filter(r => !excluded.has(laporanIdentity(r)));
     const now = new Date();
     // Today string dalam format dd/MM/yyyy Asia/Jakarta
     const todayStr = now.toLocaleDateString('id-ID', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -821,6 +830,25 @@ export async function deleteLaporan(ri: any): Promise<any> {
     return success(null, 'Laporan dan semua data terkait (foto & teks) berhasil dihapus.');
   } catch (e: any) {
     console.error('[API Error] deleteLaporan failed:', e.message);
+    return error(e.message);
+  }
+}
+
+export async function deleteLaporanBySnapshot(snapshot: any): Promise<any> {
+  try {
+    const rows = await getSheetValues(SHEET_INPUT);
+    const rowIndex = rows.findIndex((row, index) => {
+      if (index === 0) return false;
+      const rowPhotos = row.slice(C.F0, C.F0 + MAX_FOTO).map((foto: any) => String(foto || '').trim()).filter(Boolean);
+      const snapshotPhotos = Array.isArray(snapshot?.fotos) ? snapshot.fotos.map((foto: any) => String(foto || '').trim()).filter(Boolean) : [];
+      return String(row[C.TS] || '').trim() === String(snapshot?.ts || '').trim()
+        && String(row[C.LOK] || '').trim() === String(snapshot?.lokasi || '').trim()
+        && String(row[C.TGL] || '').trim() === String(snapshot?.tanggal || '').trim()
+        && JSON.stringify(rowPhotos) === JSON.stringify(snapshotPhotos);
+    });
+    if (rowIndex < 1) return error('Data laporan tidak ditemukan di spreadsheet.');
+    return deleteLaporan(rowIndex + 1);
+  } catch (e: any) {
     return error(e.message);
   }
 }

@@ -898,6 +898,48 @@ export async function deleteFirebaseLaporan(ri: string): Promise<any> {
   }
 }
 
+/** Pindahkan laporan spreadsheet ke sampah tanpa menghapus data sumbernya. */
+export async function moveSheetLaporanToTrash(ri: string): Promise<any> {
+  if (!process.env.FIREBASE_PROJECT_ID) return error('Firebase belum dikonfigurasi.');
+  const rowIndex = parseInt(ri, 10);
+  if (isNaN(rowIndex) || rowIndex < 2) return error('Row index tidak valid.');
+
+  try {
+    const rows = await getSheetValues('INPUT');
+    const row = rows[rowIndex - 1];
+    if (!row) return error('Data tidak ditemukan.');
+
+    const originalData = {
+      ts: String(row[0] || '').trim(),
+      noSpt: String(row[1] || '').trim(),
+      lokasi: String(row[2] || '').trim(),
+      hari: String(row[3] || '').trim(),
+      tanggal: String(row[4] || '').trim(),
+      identitas: String(row[5] || '').trim(),
+      personil: String(row[6] || '').trim(),
+      danru: String(row[7] || '').trim(),
+      namaDanru: String(row[8] || '').trim(),
+      keterangan: String(row[9] || '').trim(),
+      fotos: row.slice(12, 32).map((foto: any) => String(foto || '').trim()).filter(Boolean),
+      kategori: 'pedestrian',
+    };
+    const deletedAt = Date.now();
+    const trashRef = doc(collection(db, 'sampah'));
+    await setDoc(trashRef, {
+      ...originalData,
+      _ri: rowIndex,
+      _trashId: trashRef.id,
+      _sumber: 'sheet',
+      _deletedAt: deletedAt,
+      _originalData: originalData,
+    });
+
+    return success({}, 'Laporan dipindahkan ke sampah.');
+  } catch (e: any) {
+    return error(e.message);
+  }
+}
+
 // ================================================================
 //  SAMPAH (TRASH) SYSTEM
 // ================================================================
@@ -910,8 +952,9 @@ export async function getDeletedLaporan(): Promise<any> {
     const data = snap.docs.map(d => {
       const r = d.data();
       return {
-        _ri: d.id,
-        timestamp: r.timestamp || '',
+        _ri: r._ri ?? d.id,
+        _trashId: d.id,
+        timestamp: r.timestamp || r.ts || '',
         tanggal: r.tanggal || '',
         hari: r.hari || '',
         kategori: r.kategori || '',
@@ -921,7 +964,7 @@ export async function getDeletedLaporan(): Promise<any> {
         identitas: r.identitas || '',
         noSpt: r.noSpt || '',
         fotos: r.fotos || r.photos?.map((p: any) => p.url) || [],
-        fotosThumb: r.fotosThumb || r.photos?.map((p: any) => p.url) || [],
+        fotosThumb: r.fotosThumb || r.fotos || r.photos?.map((p: any) => p.url) || [],
         lat: r.lat || r.koordinat?.lat,
         lng: r.lng || r.koordinat?.lng,
         _sumber: r._sumber || 'mobile',
@@ -936,21 +979,20 @@ export async function getDeletedLaporan(): Promise<any> {
 }
 
 /** Kembalikan laporan dari sampah ke data utama. */
-export async function restoreDeletedLaporan(ri: string, _sumber: string, data: any): Promise<any> {
+export async function restoreDeletedLaporan(ri: string, _sumber: string, data: any, trashId?: string): Promise<any> {
   if (!process.env.FIREBASE_PROJECT_ID) return error('Firebase belum dikonfigurasi.');
   try {
     if (_sumber === 'mobile') {
       // Restore ke koleksi laporan
       const { _ri, _sumber, _deletedAt, _originalData, ...originalData } = data;
       await setDoc(doc(db, 'laporan', ri), originalData);
-    } else {
-      // Restore ke spreadsheet - perlu implementasi khusus
-      // Untuk sekarang, hanya support restore dari mobile
-      return error('Restore dari spreadsheet belum didukung.');
+    } else if (_sumber !== 'sheet') {
+      return error('Sumber laporan tidak dikenali.');
     }
     
-    // Hapus dari sampah
-    await deleteDoc(doc(db, 'sampah', ri));
+    // Hapus penanda sampah; laporan spreadsheet tetap tersimpan di sumbernya.
+    const trashDocumentId = trashId || (_sumber === 'sheet' ? `sheet_${ri}` : ri);
+    await deleteDoc(doc(db, 'sampah', trashDocumentId));
     
     return success({}, 'Laporan berhasil dikembalikan.');
   } catch (e: any) {
@@ -959,7 +1001,7 @@ export async function restoreDeletedLaporan(ri: string, _sumber: string, data: a
 }
 
 /** Hapus permanen laporan dari sampah. */
-export async function deletePermanentLaporan(ri: string, _sumber: string, fotos: string[]): Promise<any> {
+export async function deletePermanentLaporan(ri: string, _sumber: string, fotos: string[], originalData?: any, trashId?: string): Promise<any> {
   if (!process.env.FIREBASE_PROJECT_ID) return error('Firebase belum dikonfigurasi.');
   try {
     // 1. Hapus foto dari Cloudinary jika ada (untuk laporan mobile)
@@ -968,7 +1010,7 @@ export async function deletePermanentLaporan(ri: string, _sumber: string, fotos:
         if (url && (url.includes('cloudinary.com') || url.includes('res.cloudinary'))) {
           try {
             // Import dinamis untuk menghindari circular dependency
-            const { deleteCloudinary } = await import('../proxy');
+            const { deleteCloudinary } = await import('../proxy.js');
             await deleteCloudinary(url);
           } catch (e) {
             console.error('[DeletePermanent] Error hapus foto Cloudinary:', e);
@@ -977,32 +1019,27 @@ export async function deletePermanentLaporan(ri: string, _sumber: string, fotos:
       }
     }
 
+    // Hapus dari spreadsheet hanya setelah item dipilih untuk dihapus permanen.
+    if (_sumber !== 'mobile') {
+      const { deleteLaporan, deleteLaporanBySnapshot } = await import('./sheets-service.js');
+      const riInt = parseInt(ri, 10);
+      if ((!originalData || !originalData.ts) && (isNaN(riInt) || riInt < 2)) return error('Row index spreadsheet tidak valid.');
+      const result = originalData?.ts
+        ? await deleteLaporanBySnapshot(originalData)
+        : await deleteLaporan(riInt);
+      if (!result.success) return result;
+    }
+
     // 2. Hapus dari Firestore (laporan + sampah)
     try {
       await deleteDoc(doc(db, 'laporan', ri));
     } catch (e) { /* mungkin sudah tidak ada */ }
     
     try {
-      await deleteDoc(doc(db, 'sampah', ri));
+      const trashDocumentId = trashId || (_sumber === 'sheet' ? `sheet_${ri}` : ri);
+      await deleteDoc(doc(db, 'sampah', trashDocumentId));
     } catch (e) { /* mungkin sudah tidak ada */ }
 
-    // 3. Hapus dari Sheet jika sumbernya adalah sheet (pedestrian)
-    //    Catatan: deleteLaporan di sheets-service memerlukan nomor baris integer
-    //    Untuk sekarang, hanya hapus dari Firestore jika sumbernya mobile
-    if (_sumber !== 'mobile') {
-      try {
-        // Import dinamis untuk menghindari circular dependency
-        const { deleteLaporan } = await import('./sheets-service');
-        // ri untuk sheet adalah nomor baris integer, bukan ID string
-        const riInt = parseInt(ri);
-        if (!isNaN(riInt) && riInt >= 2) {
-          await deleteLaporan(riInt);
-        }
-      } catch (e) {
-        console.error('[DeletePermanent] Error hapus dari Sheet:', e);
-      }
-    }
-    
     return success({}, 'Laporan dihapus permanen dari semua sumber data.');
   } catch (e: any) {
     return error(e.message);
@@ -1025,7 +1062,7 @@ export async function cleanupSampah(olderThan: number): Promise<any> {
         const fotos = r.fotos || (r._originalData && r._originalData.photos 
           ? r._originalData.photos.map((p: any) => p.url || p).filter(Boolean) 
           : []);
-        await deletePermanentLaporan(d.id, r._sumber || 'mobile', fotos);
+        await deletePermanentLaporan(String(r._ri ?? d.id), r._sumber || 'mobile', fotos, r._originalData, d.id);
         deletedCount++;
       }
     }
@@ -1049,7 +1086,7 @@ export async function deleteAllSampah(): Promise<any> {
       const fotos = r.fotos || (r._originalData && r._originalData.photos 
         ? r._originalData.photos.map((p: any) => p.url || p).filter(Boolean) 
         : []);
-      await deletePermanentLaporan(d.id, r._sumber || 'mobile', fotos);
+      await deletePermanentLaporan(String(r._ri ?? d.id), r._sumber || 'mobile', fotos, r._originalData, d.id);
       deletedCount++;
     }
     

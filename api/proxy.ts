@@ -7,6 +7,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import {
   getDashboardData,
   getRekapData,
+  laporanIdentity,
   addLaporan,
   updateLaporan,
   deleteLaporan,
@@ -42,6 +43,7 @@ import {
   getFirebaseLaporan,
   updateFirebaseLaporan,
   deleteFirebaseLaporan,
+  moveSheetLaporanToTrash,
   runMigration,
   getDeletedLaporan,
   restoreDeletedLaporan,
@@ -177,14 +179,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           result = success({ pong: true, ts: new Date().toISOString() }, 'pong');
           break;
         case 'getDashboard':
-          result = await getDashboardData();
+          {
+            const trashResult = await getDeletedLaporan();
+            const deletedSheetReports = trashResult.success
+              ? trashResult.data.filter((item: any) => item._sumber === 'sheet').map((item: any) => laporanIdentity(item._originalData))
+              : [];
+            result = await getDashboardData(deletedSheetReports);
+          }
           break;
         case 'getRekap': {
           const fbRows = await getFirebaseLaporan();
+          const trashResult = await getDeletedLaporan();
           result = await getRekapData(
             { q: params.q || '', tglFrom: params.tglFrom || '', tglTo: params.tglTo || '' },
             fbRows,
           );
+          if (result.success && trashResult.success) {
+            const deletedSheetReports = new Set(
+              trashResult.data
+                .filter((item: any) => item._sumber === 'sheet')
+                .map((item: any) => laporanIdentity(item._originalData)),
+            );
+            result.data.rows = result.data.rows.filter(
+              (row: any) => row._sumber === 'mobile' || !deletedSheetReports.has(laporanIdentity(row)),
+            );
+            result.data.total = result.data.rows.length;
+          }
           break;
         }
         case 'getSatlinmas':
@@ -305,7 +325,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         case 'deleteLaporan':
           result = body._sumber === 'mobile'
             ? await deleteFirebaseLaporan(String(body.ri))
-            : await deleteLaporan(body.ri);
+            : await moveSheetLaporanToTrash(String(body.ri));
           break;
         case 'generateLaporanHtml':
           result = generateLaporanHtml(body);
@@ -368,10 +388,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           result = await runMigration();
           break;
         case 'restoreLaporan':
-          result = await restoreDeletedLaporan(body.ri, body._sumber, body.data);
+          result = await restoreDeletedLaporan(body.ri, body._sumber, body.data, body.trashId);
           break;
         case 'deletePermanentLaporan':
-          result = await deletePermanentLaporan(body.ri, body._sumber, body.fotos || []);
+          result = await deletePermanentLaporan(body.ri, body._sumber, body.fotos || [], body.originalData, body.trashId);
           break;
         case 'cleanupSampah':
           result = await cleanupSampah(body.olderThan || 0);

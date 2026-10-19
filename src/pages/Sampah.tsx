@@ -66,6 +66,7 @@ interface SampahItem {
   lat?: number | string;
   lng?: number | string;
   _sumber?: string;
+  _trashId?: string;
   _deletedAt: number;
   _originalData: any;
 }
@@ -157,6 +158,7 @@ export const Sampah: React.FC = () => {
         ri: restoreTarget._ri,
         _sumber: restoreTarget._sumber,
         data: restoreTarget._originalData,
+        trashId: restoreTarget._trashId,
       });
       hideLoad();
       if (res.success) {
@@ -183,6 +185,8 @@ export const Sampah: React.FC = () => {
         ri: deleteTarget._ri,
         _sumber: deleteTarget._sumber,
         fotos: deleteTarget.fotos || [],
+        originalData: deleteTarget._originalData,
+        trashId: deleteTarget._trashId,
       });
       hideLoad();
       if (res.success) {
